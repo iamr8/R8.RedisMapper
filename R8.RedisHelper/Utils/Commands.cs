@@ -82,6 +82,10 @@ namespace R8.RedisHelper.Utils
         {
             if (cacheKey == null)
                 throw new ArgumentNullException(nameof(cacheKey));
+            if (fields == null)
+                throw new ArgumentNullException(nameof(fields));
+            if (fields.Length == 0)
+                throw new ArgumentException("Value cannot be an empty collection.", nameof(fields));
 
             var redisKey = cacheKey.Value;
 

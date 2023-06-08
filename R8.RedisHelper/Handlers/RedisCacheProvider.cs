@@ -39,7 +39,7 @@ namespace R8.RedisHelper.Handlers
 
         public async Task<bool> ExistsAsync(string cacheKey)
         {
-            if (cacheKey == null)
+            if (string.IsNullOrWhiteSpace(cacheKey))
                 throw new ArgumentNullException(nameof(cacheKey));
 
             var redisKey = new RedisKey(cacheKey);

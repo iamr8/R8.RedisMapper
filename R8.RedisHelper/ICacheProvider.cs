@@ -45,7 +45,7 @@ namespace R8.RedisHelper
         /// Checks if a key exists in Redis.
         /// <para>https://redis.io/commands/exists/</para>
         /// </summary>
-        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="ArgumentNullException">When <paramref name="cacheKey"/> is null or empty.</exception>
         Task<bool> ExistsAsync(string cacheKey);
 
         /// <summary>
@@ -142,7 +142,8 @@ namespace R8.RedisHelper
         /// </summary>
         /// <param name="cacheKey">The cache key.</param>
         /// <param name="fields">The fields to read. If null or empty, all fields will be read.</param>
-        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="ArgumentNullException">When <paramref name="fields"/> is null.</exception>
+        /// <exception cref="ArgumentException">When <paramref name="fields"/> is empty.</exception>
         Task<RedisCache> GetAsync(RedisCacheKey cacheKey, params string[] fields);
 
         /// <summary>
@@ -151,7 +152,6 @@ namespace R8.RedisHelper
         /// </summary>
         /// <param name="cacheKey">The cache key.</param>
         /// <param name="fields">The fields to read. If null or empty, all fields will be read.</param>
-        /// <exception cref="ArgumentNullException"></exception>
         Task<RedisCache<T>> GetAsync<T>(RedisCacheKey cacheKey, params string[] fields) where T : new();
     }
 }
