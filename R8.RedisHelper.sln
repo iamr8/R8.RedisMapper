@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "R8.RedisHelper", "R8.RedisHelper\R8.RedisHelper.csproj", "{1872FFF9-4364-4326-8733-047B21BE9032}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "R8.RedisHelper.Tests", "R8.RedisHelper.Tests\R8.RedisHelper.Tests.csproj", "{D2685E91-F9BB-443F-B72F-5E72305D462B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1872FFF9-4364-4326-8733-047B21BE9032}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1872FFF9-4364-4326-8733-047B21BE9032}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1872FFF9-4364-4326-8733-047B21BE9032}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1872FFF9-4364-4326-8733-047B21BE9032}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D2685E91-F9BB-443F-B72F-5E72305D462B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D2685E91-F9BB-443F-B72F-5E72305D462B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D2685E91-F9BB-443F-B72F-5E72305D462B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D2685E91-F9BB-443F-B72F-5E72305D462B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
