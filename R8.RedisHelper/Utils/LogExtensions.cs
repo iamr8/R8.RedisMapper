@@ -29,7 +29,7 @@ namespace R8.RedisHelper.Utils
                 {
                     var cmd = cmdGroup.Key;
 
-                    foreach (var keyGroup in cmdGroup.GroupBy(x => x.CacheKey.All.Keys.First()).ToArray())
+                    foreach (var keyGroup in cmdGroup.GroupBy(x => x.CacheKey.GetParts().Keys.First()).ToArray())
                     {
                         var cacheKeys = keyGroup.Select(x => x.CacheKey).Distinct().ToArray();
                         if (cacheKeys.Length == 1)

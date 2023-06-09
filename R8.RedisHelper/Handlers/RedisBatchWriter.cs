@@ -17,51 +17,51 @@ namespace R8.RedisHelper.Handlers
             _flags = flags;
         }
 
-        public void Set<TValue>(RedisCacheKey cacheKey, string field, TValue value, When when = When.Always)
+        public void Set<TValue>(RedisKey redisKey, string field, TValue value, When when = When.Always)
         {
-            var writer = _database.Set(cacheKey, field, value, when, _flags);
+            var writer = _database.Set(redisKey, field, value, when, _flags);
             Writers.Add(writer);
         }
 
-        public void Set(RedisCacheKey cacheKey, object values)
+        public void Set(RedisKey redisKey, object values)
         {
-            var writer = _database.Set(cacheKey, values, _flags);
+            var writer = _database.Set(redisKey, values, _flags);
             Writers.Add(writer);
         }
 
-        public void Set<T>(RedisCacheKey cacheKey, T model) where T : class, new()
+        public void Set<T>(RedisKey redisKey, T model) where T : class, new()
         {
             var optimized = model.ToOptimizedDictionary();
-            Set(cacheKey, optimized);
+            Set(redisKey, optimized);
         }
 
-        public void Delete(RedisCacheKey cacheKey)
+        public void Delete(RedisKey redisKey)
         {
-            var writer = _database.Delete(cacheKey, _flags);
+            var writer = _database.Delete(redisKey, _flags);
             Writers.Add(writer);
         }
 
-        public void Delete(RedisCacheKey cacheKey, string field)
+        public void Delete(RedisKey redisKey, string field)
         {
-            var writer = _database.Delete(cacheKey, field, _flags);
+            var writer = _database.Delete(redisKey, field, _flags);
             Writers.Add(writer);
         }
 
-        public void Increment(RedisCacheKey cacheKey, string field, long value = 1L)
+        public void Increment(RedisKey redisKey, string field, long value = 1L)
         {
-            var writer = _database.Increment(cacheKey, field, value, _flags);
+            var writer = _database.Increment(redisKey, field, value, _flags);
             Writers.Add(writer);
         }
 
-        public void Increment(RedisCacheKey cacheKey, long value = 1L)
+        public void Increment(RedisKey redisKey, long value = 1L)
         {
-            var writer = _database.Increment(cacheKey, value, _flags);
+            var writer = _database.Increment(redisKey, value, _flags);
             Writers.Add(writer);
         }
 
-        public void Expire(RedisCacheKey cacheKey, TimeSpan time)
+        public void Expire(RedisKey redisKey, TimeSpan time)
         {
-            var writer = _database.Expire(cacheKey, time, _flags);
+            var writer = _database.Expire(redisKey, time, _flags);
             Writers.Add(writer);
         }
     }

@@ -37,20 +37,15 @@ namespace R8.RedisHelper.Handlers
             return _server.FlushDatabaseAsync(DatabaseId, fireAndForget ? CommandFlags.FireAndForget : CommandFlags.None);
         }
 
-        public async Task<bool> ExistsAsync(string cacheKey)
+        public async Task<bool> ExistsAsync(RedisKey redisKey)
         {
-            if (string.IsNullOrWhiteSpace(cacheKey))
-                throw new ArgumentNullException(nameof(cacheKey));
-
-            var redisKey = new RedisKey(cacheKey);
-
             var exists = await _database.KeyExistsAsync(redisKey);
             _logger.LogDebug("EXISTS {CacheKey}", redisKey);
 
             return exists;
         }
 
-        public RedisCacheKey[] Scan(string pattern, int pageSize = 100)
+        public RedisKey[] Scan(string pattern, int pageSize = 100)
         {
             if (pattern == null)
                 throw new ArgumentNullException(nameof(pattern));
@@ -78,12 +73,12 @@ namespace R8.RedisHelper.Handlers
             if (keys.Count == 0)
             {
                 _logger.LogDebug("SCAN 0 MATCH {Pattern} COUNT {PageSize}", pattern, pageSize);
-                return Array.Empty<RedisCacheKey>();
+                return Array.Empty<RedisKey>();
             }
 
-            var output = new RedisCacheKey[keys.Count];
+            var output = new RedisKey[keys.Count];
             for (int i = 0; i < keys.Count; i++)
-                output[i] = new RedisCacheKey(keys[i]);
+                output[i] = keys[i];
 
             return output;
         }
@@ -204,9 +199,9 @@ namespace R8.RedisHelper.Handlers
             return redisCaches;
         }
 
-        public async Task<RedisCache<T>> GetAsync<T>(RedisCacheKey cacheKey, params string[] fields) where T : new()
+        public async Task<RedisCache<T>> GetAsync<T>(RedisKey redisKey, params string[] fields) where T : new()
         {
-            var reader = _database.Get<T>(cacheKey, fields);
+            var reader = _database.Get<T>(redisKey, fields);
             await reader.ExecuteAsync();
             var result = reader.GetResult();
             reader.WriteToLog(_logger);
@@ -215,9 +210,9 @@ namespace R8.RedisHelper.Handlers
             return redisCache;
         }
 
-        public async Task<RedisCache> GetAsync(RedisCacheKey cacheKey, params string[] fields)
+        public async Task<RedisCache> GetAsync(RedisKey redisKey, params string[] fields)
         {
-            var reader = _database.Get(cacheKey, fields);
+            var reader = _database.Get(redisKey, fields);
             await reader.ExecuteAsync();
             var result = reader.GetResult();
             reader.WriteToLog(_logger);
@@ -226,86 +221,86 @@ namespace R8.RedisHelper.Handlers
             return redisCache;
         }
 
-        public async Task<RedisCache<bool>> SetAsync<TValue>(RedisCacheKey cacheKey, string field, TValue value, When when = When.Always, bool fireAndForget = true)
+        public async Task<RedisCache<bool>> SetAsync<TValue>(RedisKey redisKey, string field, TValue value, When when = When.Always, bool fireAndForget = true)
         {
-            var writer = _database.Set(cacheKey, field, value, when, fireAndForget ? CommandFlags.FireAndForget : CommandFlags.None);
+            var writer = _database.Set(redisKey, field, value, when, fireAndForget ? CommandFlags.FireAndForget : CommandFlags.None);
             await writer.ExecuteAsync();
             var result = writer.GetResult<bool>();
             writer.WriteToLog(_logger);
 
-            var c = new RedisCache<bool>(cacheKey.Value, result);
+            var c = new RedisCache<bool>(redisKey, result);
             return c;
         }
 
-        public Task SetAsync<T>(RedisCacheKey cacheKey, T model, bool fireAndForget = true)
+        public Task SetAsync<T>(RedisKey redisKey, T model, bool fireAndForget = true)
         {
             var optimized = model.ToOptimizedDictionary();
-            return SetAsync(cacheKey, (object) optimized, fireAndForget);
+            return SetAsync(redisKey, (object) optimized, fireAndForget);
         }
 
-        public async Task<RedisCache<bool>> SetAsync(RedisCacheKey cacheKey, object values, bool fireAndForget = true)
+        public async Task<RedisCache<bool>> SetAsync(RedisKey redisKey, object values, bool fireAndForget = true)
         {
-            var writer = _database.Set(cacheKey, values, fireAndForget ? CommandFlags.FireAndForget : CommandFlags.None);
+            var writer = _database.Set(redisKey, values, fireAndForget ? CommandFlags.FireAndForget : CommandFlags.None);
             await writer.ExecuteAsync();
             var result = writer.GetResult<bool>();
             writer.WriteToLog(_logger);
 
-            var c = new RedisCache<bool>(cacheKey.Value, result);
+            var c = new RedisCache<bool>(redisKey, result);
             return c;
         }
 
-        public async Task<RedisCache<bool>> DeleteAsync(RedisCacheKey cacheKey, bool fireAndForget = true)
+        public async Task<RedisCache<bool>> DeleteAsync(RedisKey redisKey, bool fireAndForget = true)
         {
-            var writer = _database.Delete(cacheKey, fireAndForget ? CommandFlags.FireAndForget : CommandFlags.None);
+            var writer = _database.Delete(redisKey, fireAndForget ? CommandFlags.FireAndForget : CommandFlags.None);
             await writer.ExecuteAsync();
             var result = writer.GetResult<bool>();
             writer.WriteToLog(_logger);
 
-            var c = new RedisCache<bool>(cacheKey.Value, result);
+            var c = new RedisCache<bool>(redisKey, result);
             return c;
         }
 
-        public async Task<RedisCache<bool>> DeleteAsync(RedisCacheKey cacheKey, string field, bool fireAndForget = true)
+        public async Task<RedisCache<bool>> DeleteAsync(RedisKey redisKey, string field, bool fireAndForget = true)
         {
-            var writer = _database.Delete(cacheKey, field, fireAndForget ? CommandFlags.FireAndForget : CommandFlags.None);
+            var writer = _database.Delete(redisKey, field, fireAndForget ? CommandFlags.FireAndForget : CommandFlags.None);
             await writer.ExecuteAsync();
             var result = writer.GetResult<bool>();
             writer.WriteToLog(_logger);
 
-            var c = new RedisCache<bool>(cacheKey.Value, result);
+            var c = new RedisCache<bool>(redisKey, result);
             return c;
         }
 
-        public async Task<RedisCache<long>> IncrementAsync(RedisCacheKey cacheKey, string field, long value = 1, bool fireAndForget = true)
+        public async Task<RedisCache<long>> IncrementAsync(RedisKey redisKey, string field, long value = 1, bool fireAndForget = true)
         {
-            var writer = _database.Increment(cacheKey, field, value, fireAndForget ? CommandFlags.FireAndForget : CommandFlags.None);
+            var writer = _database.Increment(redisKey, field, value, fireAndForget ? CommandFlags.FireAndForget : CommandFlags.None);
             await writer.ExecuteAsync();
             var result = writer.GetResult<long>();
             writer.WriteToLog(_logger);
 
-            var c = new RedisCache<long>(cacheKey.Value, result);
+            var c = new RedisCache<long>(redisKey, result);
             return c;
         }
 
-        public async Task<RedisCache<long>> IncrementAsync(RedisCacheKey cacheKey, long value = 1, bool fireAndForget = false)
+        public async Task<RedisCache<long>> IncrementAsync(RedisKey redisKey, long value = 1, bool fireAndForget = false)
         {
-            var writer = _database.Increment(cacheKey, value, fireAndForget ? CommandFlags.FireAndForget : CommandFlags.None);
+            var writer = _database.Increment(redisKey, value, fireAndForget ? CommandFlags.FireAndForget : CommandFlags.None);
             await writer.ExecuteAsync();
             var result = writer.GetResult<long>();
             writer.WriteToLog(_logger);
 
-            var c = new RedisCache<long>(cacheKey.Value, result);
+            var c = new RedisCache<long>(redisKey, result);
             return c;
         }
 
-        public async Task<RedisCache<bool>> ExpireAsync(RedisCacheKey cacheKey, TimeSpan time, bool fireAndForget = true)
+        public async Task<RedisCache<bool>> ExpireAsync(RedisKey redisKey, TimeSpan time, bool fireAndForget = true)
         {
-            var writer = _database.Expire(cacheKey, time, fireAndForget ? CommandFlags.FireAndForget : CommandFlags.None);
+            var writer = _database.Expire(redisKey, time, fireAndForget ? CommandFlags.FireAndForget : CommandFlags.None);
             await writer.ExecuteAsync();
             var result = writer.GetResult<bool>();
             writer.WriteToLog(_logger);
 
-            var c = new RedisCache<bool>(cacheKey.Value, result);
+            var c = new RedisCache<bool>(redisKey, result);
             return c;
         }
 

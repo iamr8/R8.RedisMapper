@@ -1,7 +1,6 @@
 ﻿using FluentAssertions;
 using NSubstitute;
 using R8.RedisHelper.Handlers;
-using R8.RedisHelper.Models;
 using R8.RedisHelper.Utils;
 using StackExchange.Redis;
 
@@ -20,7 +19,7 @@ public class RedisBatchWriterTests
     [InlineData(CommandFlags.FireAndForget, "field5", When.NotExists)]
     public async Task Get_method_should_call_dataBase_HashSetAsync_method_with_correct_fields(CommandFlags flag, string fieldName, When when)
     {
-        var redisKey = RedisCacheKey.Create("test");
+        var redisKey = new RedisKey("test");
         var value = new FakeRedisTestModel()
         {
             field1 = "f1",
@@ -37,7 +36,7 @@ public class RedisBatchWriterTests
 
 
         Sut.Writers.Count.Should().Be(1);
-        await _database.Received(1).HashSetAsync(new RedisKey(redisKey), new RedisValue(fieldName),
+        await _database.Received(1).HashSetAsync(redisKey, new RedisValue(fieldName),
              Arg.Is<RedisValue>(s => s.IsTheSameAs(RedisValue.Unbox(value.ToOptimizedObject()))),
               when,flag);
     }
@@ -48,7 +47,7 @@ public class RedisBatchWriterTests
     public async Task N_times_calling_Set_method_with_fieldName_causes_n_times_dataBase_HashSetAsync_method_call(CommandFlags flag, string fieldName, When when, int times)
     {
         _flag = flag;
-        var redisKey = RedisCacheKey.Create("test");
+        var redisKey = new RedisKey("test");
         var executingTimes = times - 1;
         var value = new FakeRedisTestModel()
         {
@@ -67,7 +66,7 @@ public class RedisBatchWriterTests
 
 
         Sut.Writers.Count.Should().Be(times);
-        await _database.Received(executingTimes).HashSetAsync(new RedisKey(redisKey),new RedisValue(fieldName),
+        await _database.Received(executingTimes).HashSetAsync(redisKey,new RedisValue(fieldName),
             Arg.Is<RedisValue>(s => s.IsTheSameAs(RedisValue.Unbox(value.ToOptimizedObject()))),
             when,flag);
     }
@@ -78,7 +77,7 @@ public class RedisBatchWriterTests
     public async Task N_times_calling_object_Set_method_causes_n_times_dataBase_HashSetAsync_method_call(CommandFlags flag, int times)
     {
         _flag = flag;
-        var redisKey = RedisCacheKey.Create("test");
+        var redisKey = new RedisKey("test");
         var executingTimes = times - 1;
         var value = new FakeRedisTestModel()
         {
@@ -101,7 +100,7 @@ public class RedisBatchWriterTests
 
 
         Sut.Writers.Count.Should().Be(times);
-        await _database.Received(executingTimes).HashSetAsync(new RedisKey(redisKey),
+        await _database.Received(executingTimes).HashSetAsync(redisKey,
             Arg.Is<HashEntry[]>(s => s.IsTheSameAs(hashFields)),
             flag);
     }
@@ -112,7 +111,7 @@ public class RedisBatchWriterTests
     public async Task N_times_calling_class_Set_method_causes_n_times_dataBase_HashSetAsync_method_call(CommandFlags flag, int times)
     {
         _flag = flag;
-        var redisKey = RedisCacheKey.Create("test");
+        var redisKey = new RedisKey("test");
         var executingTimes = times - 1;
         var value = new FakeRedisTestModel()
         {
@@ -134,7 +133,7 @@ public class RedisBatchWriterTests
 
 
         Sut.Writers.Count.Should().Be(times);
-        await _database.Received(executingTimes).HashSetAsync(new RedisKey(redisKey),
+        await _database.Received(executingTimes).HashSetAsync(redisKey,
             Arg.Is<HashEntry[]>(s => s.IsTheSameAs(hashFields)),
             flag);
     }
@@ -145,7 +144,7 @@ public class RedisBatchWriterTests
     public async Task N_times_calling_Delete_method_causes_n_times_dataBase_KeyDeleteAsync_method_call(CommandFlags flag, int times)
     {
         _flag = flag;
-        var redisKey = RedisCacheKey.Create("test");
+        var redisKey = new RedisKey("test");
         var executingTimes = times - 1;
 
 
@@ -156,7 +155,7 @@ public class RedisBatchWriterTests
 
 
         Sut.Writers.Count.Should().Be(times);
-        await _database.Received(executingTimes).KeyDeleteAsync(new RedisKey(redisKey),flag);
+        await _database.Received(executingTimes).KeyDeleteAsync(redisKey,flag);
     }
 
     [Theory]
@@ -165,7 +164,7 @@ public class RedisBatchWriterTests
     public async Task N_times_calling_Delete_method_with_fieldName_causes_n_times_dataBase_HashDeleteAsync_method_call(CommandFlags flag, int times, string fieldName)
     {
         _flag = flag;
-        var redisKey = RedisCacheKey.Create("test");
+        var redisKey = new RedisKey("test");
         var executingTimes = times - 1;
 
 
@@ -176,7 +175,7 @@ public class RedisBatchWriterTests
 
 
         Sut.Writers.Count.Should().Be(times);
-        await _database.Received(executingTimes).HashDeleteAsync(new RedisKey(redisKey),new RedisValue(fieldName),flag);
+        await _database.Received(executingTimes).HashDeleteAsync(redisKey,new RedisValue(fieldName),flag);
     }
 
     [Theory]
@@ -185,7 +184,7 @@ public class RedisBatchWriterTests
     public async Task N_times_calling_Increment_method_causes_n_times_dataBase_StringIncrementAsync_method_call(CommandFlags flag, int times, int value)
     {
         _flag = flag;
-        var redisKey = RedisCacheKey.Create("test");
+        var redisKey = new RedisKey("test");
         var executingTimes = times - 1;
 
 
@@ -196,7 +195,7 @@ public class RedisBatchWriterTests
 
 
         Sut.Writers.Count.Should().Be(times);
-        await _database.Received(executingTimes).StringIncrementAsync( new RedisKey(redisKey), value,flag);
+        await _database.Received(executingTimes).StringIncrementAsync( redisKey, value,flag);
     }
 
     [Theory]
@@ -205,7 +204,7 @@ public class RedisBatchWriterTests
     public async Task N_times_calling_Increment_method_with_fieldName_causes_n_times_dataBase_HashIncrementAsync_method_call(CommandFlags flag, int times, int value, string fieldName)
     {
         _flag = flag;
-        var redisKey = RedisCacheKey.Create("test");
+        var redisKey = new RedisKey("test");
         var executingTimes = times - 1;
 
 
@@ -216,7 +215,7 @@ public class RedisBatchWriterTests
 
 
         Sut.Writers.Count.Should().Be(times);
-        await _database.Received(executingTimes).HashIncrementAsync(new RedisKey(redisKey),new RedisValue(fieldName),value,flag);
+        await _database.Received(executingTimes).HashIncrementAsync(redisKey,new RedisValue(fieldName),value,flag);
     }
 
     [Theory]
@@ -225,7 +224,7 @@ public class RedisBatchWriterTests
     public async Task N_times_calling_Increment_method_with_fieldName_causes_n_times_dataBase_KeyExpireAsync_method_call(CommandFlags flag, int times, string time)
     {
         _flag = flag;
-        var redisKey = RedisCacheKey.Create("test");
+        var redisKey = new RedisKey("test");
         var executingTimes = times - 1;
         var expectedValue = TimeSpan.Parse(time);
 
@@ -237,6 +236,6 @@ public class RedisBatchWriterTests
 
 
         Sut.Writers.Count.Should().Be(times);
-        await _database.Received(executingTimes).KeyExpireAsync(new RedisKey(redisKey), expectedValue, flag);
+        await _database.Received(executingTimes).KeyExpireAsync(redisKey, expectedValue, flag);
     }
 }

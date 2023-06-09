@@ -14,18 +14,13 @@ namespace R8.RedisHelper.Models
 
         internal RedisCache(RedisKey key, TModel value)
         {
-            Key = new RedisCacheKey(key);
+            Key = key;
             Value = value;
             _missedFieldsMemory = null;
             _missedFieldsCount = 0;
         }
 
-        public RedisCache(TModel value) : this()
-        {
-            Value = value;
-        }
-
-        public RedisCacheKey Key { get; }
+        public RedisKey Key { get; }
 
         /// <summary>
         /// Gets the model from the cached values.
@@ -48,26 +43,23 @@ namespace R8.RedisHelper.Models
         public string[] GetMissedFields()
         {
             if (_missedFieldsCount == 0)
-            {
-                return null;
-            }
+                return Array.Empty<string>();
 
             var missedFields = new string[_missedFieldsCount];
             var span = _missedFieldsMemory.Span;
 
-            int start = 0;
-            int fieldIndex = 0;
-            for (int i = 0; i < span.Length; i++)
+            var start = 0;
+            var fieldIndex = 0;
+            for (var i = 0; i < span.Length; i++)
             {
-                if (span[i] == '\0')
-                {
-                    missedFields[fieldIndex++] = span.Slice(start, i - start).ToString();
-                    start = i + 1;
-                }
+                if (span[i] != '\0') 
+                    continue;
+                
+                missedFields[fieldIndex++] = span.Slice(start, i - start).ToString();
+                start = i + 1;
             }
 
-            missedFields[fieldIndex] = span.Slice(start).ToString();
-
+            missedFields[fieldIndex] = span[start..].ToString();
             return missedFields;
         }
     }

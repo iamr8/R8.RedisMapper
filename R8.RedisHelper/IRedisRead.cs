@@ -9,6 +9,6 @@ namespace R8.RedisHelper
         /// <para>https://redis.io/commands/hmget/<br />https://redis.io/commands/hget/</para>
         /// </summary>
         /// <exception cref="ArgumentNullException"></exception>
-        void Get(RedisCacheKey cacheKey, params string[] fields);
+        void Get(RedisKey redisKey, params string[] fields);
     }
 }

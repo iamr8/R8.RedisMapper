@@ -20,7 +20,7 @@ services.AddRedisHelper(options =>
 ```
 
 #### Step 3
-Inject `ICacheProvider` to your class and use it.
+Inject `ICacheProvider` to your class constructor and use it.
 
 ---
 ### Supported Commands
@@ -43,7 +43,7 @@ Inject `ICacheProvider` to your class and use it.
 ```csharp
 public async Task<FooModel> FooAsync()
 {
-    var cacheKey = RedisCacheKey.Create("foo", "bar"); // "foo:bar"
+    var cacheKey = new RedisKey("foo:bar");
     var cache = await _cacheProvider.GetAsync<FooModel>(cacheKey);
     if (cache.IsNull)
         return null;
@@ -55,7 +55,7 @@ public async Task<FooModel> FooAsync()
 ```csharp
 public async Task<string> FooAsync()
 {
-    var cacheKey = RedisCacheKey.Create("foo", "bar"); // "foo:bar"
+    var cacheKey = new RedisKey("foo:bar");
     var cache = await _cacheProvider.GetAsync<FooModel>(cacheKey, "name");
     if (cache.IsNull)
         return null;
@@ -69,7 +69,7 @@ _`fields` param is a `params string[]` type, so you can get multiple fields at o
 ```csharp
 public async Task<Dictionary<string, RedisCacheValue>> FooAsync()
 {
-    var cacheKey = RedisCacheKey.Create("foo", "bar"); // "foo:bar"
+    var cacheKey = new RedisKey("foo:bar");
     var cache = await _cacheProvider.GetAsync(cacheKey);
     if (cache.IsNull)
         return null;
@@ -89,7 +89,7 @@ public class FooModel
 
 public async Task FooAsync()
 {
-    var cacheKey = RedisCacheKey.Create("foo", "bar"); // "foo:bar"
+    var cacheKey = new RedisKey("foo:bar");
     var model = new FooModel { Name = "Arash" };
     await _cacheProvider.SetAsync<FooModel>(cacheKey, model);
 }
@@ -98,7 +98,7 @@ public async Task FooAsync()
 ```csharp
 public async Task FooAsync()
 {
-    var cacheKey = RedisCacheKey.Create("foo", "bar"); // "foo:bar"
+    var cacheKey = new RedisKey("foo:bar");
     var cached = await _cacheProvider.SetAsync(cacheKey, new { name = "Arash" });
     if (cached.IsNull || !cached.Value)
         throw new Exception("Something went wrong!");
@@ -110,7 +110,7 @@ public async Task FooAsync()
 ```csharp
 public async Task FooAsync()
 {
-    var cacheKey = RedisCacheKey.Create("foo", "bar"); // "foo:bar"
+    var cacheKey = new RedisKey("foo:bar");
     var cached = await _cacheProvider.SetAsync(cacheKey, "name", "Arash");
     if (cached.IsNull || !cached.Value)
         throw new Exception("Something went wrong!");
@@ -125,7 +125,7 @@ When you want to check if a cache key exists:
 ```csharp
 public async Task<bool> FooAsync()
 {
-    var cacheKey = RedisCacheKey.Create("foo", "bar"); // "foo:bar"
+    var cacheKey = new RedisKey("foo:bar");
     var exists = await _cacheProvider.ExistsAsync(cacheKey);
     return exists;
 }
@@ -137,7 +137,7 @@ public async Task<bool> FooAsync()
 ```csharp
 public async Task<bool> FooAsync()
 {
-    var cacheKey = RedisCacheKey.Create("foo", "bar"); // "foo:bar"
+    var cacheKey = new RedisKey("foo:bar");
     var deleted = await _cacheProvider.DeleteAsync(cacheKey);
     if (deleted.IsNull)
         throw new Exception("Something went wrong!");
@@ -149,7 +149,7 @@ public async Task<bool> FooAsync()
 ```csharp
 public async Task<bool> FooAsync()
 {
-    var cacheKey = RedisCacheKey.Create("foo", "bar"); // "foo:bar"
+    var cacheKey = new RedisKey("foo:bar");
     var deleted = await _cacheProvider.DeleteAsync(cacheKey, "name");
     if (deleted.IsNull)
         throw new Exception("Something went wrong!");
@@ -164,7 +164,7 @@ public async Task<bool> FooAsync()
 ```csharp
 public async Task<long> FooAsync()
 {
-    var cacheKey = RedisCacheKey.Create("foo"); // "foo"
+    var cacheKey = new RedisKey("foo");
     var updatedValue = await _cacheProvider.IncrementAsync(cacheKey, 1);
     if (updatedValue.IsNull)
         throw new Exception("Something went wrong!");
@@ -176,7 +176,7 @@ public async Task<long> FooAsync()
 ```csharp
 public async Task<long> FooAsync()
 {
-    var cacheKey = RedisCacheKey.Create("foo", "bar"); // "foo:bar"
+    var cacheKey = new RedisKey("foo:bar");
     var updatedValue = await _cacheProvider.IncrementAsync(cacheKey, "retry", 1);
     if (updatedValue.IsNull)
         throw new Exception("Something went wrong!");
@@ -191,7 +191,7 @@ When you want to set expire time for a cached key:
 ```csharp
 public async Task FooAsync()
 {
-    var cacheKey = RedisCacheKey.Create("foo", "bar"); // "foo:bar"
+    var cacheKey = new RedisKey("foo:bar");
     var set = await _cacheProvider.ExpireAsync(cacheKey, TimeSpan.FromSeconds(10));
     if (set.IsNull || !set.Value)
         throw new Exception("Something went wrong!");
@@ -228,7 +228,7 @@ public async Task FooAsync()
 ```csharp
 public async Task FooAsync()
 {
-    var cacheKey = RedisCacheKey.Create("foo", "bar"); // "foo:bar"
+    var cacheKey = new RedisKey("foo:bar");
     await _cacheProvider.BatchAsync(b => 
     {
         b.Set(cacheKey, "name", "Arash");
@@ -248,8 +248,8 @@ public async Task<FooModel[]> FooAsync()
 {
     var readCached = await _cacheProvider.BatchAsync<FooModel>(b => 
     {
-        b.Get(RedisCacheKey.Create("foo", "bar"));
-        b.Get(RedisCacheKey.Create("foo", "bar2"));
+        b.Get(new RedisKey("foo:bar"));
+        b.Get(new RedisKey("foo:bar2"));
     });
     if (!readCached.Any() || readCached.All(x => x.IsNull))
         return Array.Empty<FooModel>();

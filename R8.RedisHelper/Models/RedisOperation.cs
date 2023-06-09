@@ -5,7 +5,7 @@ namespace R8.RedisHelper.Models
 {
     internal abstract class RedisOperation : IRedisOperation
     {
-        public RedisCacheKey CacheKey { get; init; }
+        public RedisKey CacheKey { get; init; }
         public string Command { get; set; }
         public string[] Fields { get; set; }
         public RedisValue[] Values { get; set; }
@@ -15,7 +15,7 @@ namespace R8.RedisHelper.Models
         
             sb.Append(this.Command);
             sb.Append(' ');
-            sb.Append(this.CacheKey.Value);
+            sb.Append(this.CacheKey);
 
             if (this.Fields?.Any() == true && this.Values?.Any() == true)
             {

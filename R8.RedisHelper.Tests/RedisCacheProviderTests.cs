@@ -1,7 +1,6 @@
 ﻿using FluentAssertions;
 using NSubstitute;
 using R8.RedisHelper.Handlers;
-using R8.RedisHelper.Models;
 using StackExchange.Redis;
 
 namespace R8.RedisHelper.Tests;
@@ -74,17 +73,6 @@ public class RedisCacheProviderTests
     }
 
     [Fact]
-    public async Task Passing_null_cacheKey_to_ExistsAsync_causes_ArgumentNullException()
-    {
-        Sut.SetPrivateField("_database", Substitute.For<IDatabase>());
-
-        var act = async () => await Sut.ExistsAsync(null);
-
-        await act.Should().ThrowAsync<ArgumentNullException>();
-    }
-
-
-    [Fact]
     public void Having_more_than_One_pageSize_items_causes_multiple_server_Keys_call()
     {
         var pattern = new RedisValue("test");
@@ -107,7 +95,7 @@ public class RedisCacheProviderTests
 
         mockServer.Received(1).Keys(_databaseId, pattern, pageSize, 0L);
         mockServer.Received(1).Keys(_databaseId, pattern, pageSize, 3L);
-        result.Should().BeEquivalentTo(expectedResult.Select(s => new RedisCacheKey(s)).ToArray());
+        result.Should().BeEquivalentTo(expectedResult.Select(x => new RedisKey(x)).ToArray());
     }
 
     [Fact]
@@ -157,7 +145,7 @@ public class RedisCacheProviderTests
     [Fact]
     public async Task GetAsync_causes_database_HashGetAsync_and_return_correct_result()
     {
-        var cacheKey = "test";
+        var cacheKey = new RedisKey("test");
         var fields = new[] { "field1", "field2" };
         var expectedResult = new FakeRedisTestModel() { field1 = "f1", field2 = "f2" };
         var mockDatabase = Substitute.For<IDatabase>();
@@ -170,14 +158,14 @@ public class RedisCacheProviderTests
         var result = await Sut.GetAsync<FakeRedisTestModel>(cacheKey, fields);
 
         result.Value.Should().BeEquivalentTo(expectedResult);
-        await mockDatabase.Received(1).HashGetAsync(new RedisKey(cacheKey),
+        await mockDatabase.Received(1).HashGetAsync(cacheKey,
             Arg.Is<RedisValue[]>(s => s.IsTheSameAs(fields.Select(w => new RedisValue(w)).ToArray())));
     }
 
     [Fact]
     public async Task Non_generic_GetAsync_causes_database_HashGetAsync_and_return_correct_result()
     {
-        var cacheKey = "test";
+        var cacheKey = new RedisKey("test");
         var fields = new[] { "field1", "field2" };
         var expectedResult = new Dictionary<string, RedisValue>()
         {
@@ -191,7 +179,7 @@ public class RedisCacheProviderTests
         var result = await Sut.GetAsync(cacheKey, "field1", "field2");
 
         result.Value.Should().BeEquivalentTo(expectedResult);
-        await mockDatabase.Received(1).HashGetAsync(new RedisKey(cacheKey),
+        await mockDatabase.Received(1).HashGetAsync(cacheKey,
             Arg.Is<RedisValue[]>(s => s.IsTheSameAs(fields.Select(w => new RedisValue(w)).ToArray()))
         );
     }
@@ -201,7 +189,7 @@ public class RedisCacheProviderTests
     [InlineData(When.Always, false, true)]
     public async Task SetAsync_causes_database_HashSetAsync_and_return_correct_result(When when, bool expectedResult, bool fireAndForget)
     {
-        var cacheKey = "test";
+        var cacheKey = new RedisKey("test");
         var mockDatabase = Substitute.For<IDatabase>();
         var fieldName = "field1";
         var expectedValue = "f1";
@@ -221,7 +209,7 @@ public class RedisCacheProviderTests
     [InlineData(true)]
     public async Task Generic_SetAsync_causes_database_HashSetAsync_call(bool fireAndForget)
     {
-        var cacheKey = "test";
+        var cacheKey = new RedisKey("test");
         var mockDatabase = Substitute.For<IDatabase>();
         var value = new FakeRedisTestModel() { field1 = "f1", field3 = "f3" };
         var expectedValue = new HashEntry[] { new("field1", "f1"), new("field3", "f3") };
@@ -240,7 +228,7 @@ public class RedisCacheProviderTests
     [InlineData(true)]
     public async Task Calling_SetAsync_with_passing_object_causes_database_HashSetAsync_call(bool fireAndForget)
     {
-        var cacheKey = "test";
+        var cacheKey = new RedisKey("test");
         var mockDatabase = Substitute.For<IDatabase>();
         var value = new { field1 = "f1", field3 = "f3" };
         var expectedValue = new HashEntry[] { new("field1", "f1"), new("field3", "f3") };
@@ -258,7 +246,7 @@ public class RedisCacheProviderTests
     [InlineData(true)]
     public async Task DeleteAsync_causes_database_KeyDeleteAsync_call(bool fireAndForget)
     {
-        var cacheKey = "test";
+        var cacheKey = new RedisKey("test");
         var mockDatabase = Substitute.For<IDatabase>();
         Sut.SetPrivateField("_database", mockDatabase);
 
@@ -272,14 +260,14 @@ public class RedisCacheProviderTests
     [InlineData(true)]
     public async Task DeleteAsync_by_fieldName_causes_database_HashDeleteAsync_call(bool fireAndForget)
     {
-        var cacheKey = "test";
+        var cacheKey = new RedisKey("test");
         var mockDatabase = Substitute.For<IDatabase>();
         var fieldName = "SampleName";
         Sut.SetPrivateField("_database", mockDatabase);
 
         await Sut.DeleteAsync(cacheKey, fieldName, fireAndForget);
 
-        await mockDatabase.Received(1).HashDeleteAsync(new RedisKey(cacheKey),
+        await mockDatabase.Received(1).HashDeleteAsync(cacheKey,
             Arg.Is<RedisValue>(s => s.IsTheSameAs(new RedisValue(fieldName))),
             fireAndForget ? CommandFlags.FireAndForget : CommandFlags.None);
     }
@@ -289,13 +277,13 @@ public class RedisCacheProviderTests
     [InlineData(4, true)]
     public async Task IncrementAsync_causes_database_StringIncrementAsync_call(long expectedValue, bool fireAndForget)
     {
-        var cacheKey = "test";
+        var cacheKey = new RedisKey("test");
         var mockDatabase = Substitute.For<IDatabase>();
         Sut.SetPrivateField("_database", mockDatabase);
 
         await Sut.IncrementAsync(cacheKey, expectedValue, fireAndForget);
 
-        await mockDatabase.Received(1).StringIncrementAsync(new RedisKey(cacheKey), expectedValue, fireAndForget ? CommandFlags.FireAndForget : CommandFlags.None);
+        await mockDatabase.Received(1).StringIncrementAsync(cacheKey, expectedValue, fireAndForget ? CommandFlags.FireAndForget : CommandFlags.None);
     }
 
     [Theory]
@@ -303,14 +291,14 @@ public class RedisCacheProviderTests
     [InlineData(4, true)]
     public async Task IncrementAsync_by_fieldName_causes_database_HashIncrementAsync_call(long expectedValue, bool fireAndForget)
     {
-        var cacheKey = "test";
+        var cacheKey = new RedisKey("test");
         var mockDatabase = Substitute.For<IDatabase>();
         var fieldName = "SampleName";
         Sut.SetPrivateField("_database", mockDatabase);
 
         await Sut.IncrementAsync(cacheKey, fieldName, expectedValue, fireAndForget);
 
-        await mockDatabase.Received(1).HashIncrementAsync(new RedisKey(cacheKey),
+        await mockDatabase.Received(1).HashIncrementAsync(cacheKey,
             Arg.Is<RedisValue>(s => s.IsTheSameAs(new RedisValue(fieldName))),
             expectedValue, (fireAndForget ? CommandFlags.FireAndForget : CommandFlags.None));
     }
@@ -320,14 +308,14 @@ public class RedisCacheProviderTests
     [InlineData("00:11:14:03", true)]
     public async Task ExpireAsync_causes_database_KeyExpireAsync_call(string time, bool fireAndForget)
     {
-        var cacheKey = "test";
+        var cacheKey = new RedisKey("test");
         var mockDatabase = Substitute.For<IDatabase>();
         var expectedTime = TimeSpan.Parse(time);
         Sut.SetPrivateField("_database", mockDatabase);
 
         await Sut.ExpireAsync(cacheKey, expectedTime, fireAndForget);
 
-        await mockDatabase.Received(1).KeyExpireAsync(new RedisKey(cacheKey),
+        await mockDatabase.Received(1).KeyExpireAsync(cacheKey,
             expectedTime, (fireAndForget ? CommandFlags.FireAndForget : CommandFlags.None));
     }
 
@@ -346,7 +334,7 @@ public class RedisCacheProviderTests
     [InlineData(false)]
     public async Task BatchWriteAsync_causes_dataBase_batch_call(bool fireAndForget)
     {
-        var cacheKey = "test";
+        var cacheKey = new RedisKey("test");
         var mockDatabase = Substitute.For<IDatabase>();
         var mockBatch = Substitute.For<IBatch>();
         mockDatabase.CreateBatch().Returns(mockBatch);
@@ -354,7 +342,7 @@ public class RedisCacheProviderTests
 
         await Sut.BatchAsync(b => { b.Delete(cacheKey); }, fireAndForget);
 
-        await mockBatch.Received(1).KeyDeleteAsync(new RedisKey(cacheKey), fireAndForget ? CommandFlags.FireAndForget : CommandFlags.None);
+        await mockBatch.Received(1).KeyDeleteAsync(cacheKey, fireAndForget ? CommandFlags.FireAndForget : CommandFlags.None);
     }
 
     [Fact]
@@ -371,7 +359,7 @@ public class RedisCacheProviderTests
     [Fact]
     public async Task BatchReadAsync_causes_dataBase_batch_call()
     {
-        var cacheKey = "test";
+        var cacheKey = new RedisKey("test");
         var expectedValue = new FakeRedisTestModel() { field1 = "f1" };
         var fieldName = "field1";
         var mockDatabase = Substitute.For<IDatabase>();
@@ -384,6 +372,6 @@ public class RedisCacheProviderTests
 
         result.Count.Should().Be(1);
         result.First().Value.Should().BeEquivalentTo(expectedValue);
-        await mockBatch.Received(1).HashGetAsync(new RedisKey(cacheKey), new RedisValue(fieldName));
+        await mockBatch.Received(1).HashGetAsync(cacheKey, new RedisValue(fieldName));
     }
 }

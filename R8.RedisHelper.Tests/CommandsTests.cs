@@ -1,6 +1,5 @@
 ﻿using FluentAssertions;
 using NSubstitute;
-using R8.RedisHelper.Models;
 using StackExchange.Redis;
 using R8.RedisHelper.Utils;
 
@@ -19,7 +18,7 @@ public class CommandsTests
         var value = 5;
 
 
-        var result = _database.Increment(new RedisCacheKey(redisKey), value, flag);
+        var result = _database.Increment(redisKey, value, flag);
         await result.ExecuteAsync();
 
 
@@ -39,11 +38,11 @@ public class CommandsTests
         var fieldName = "field2";
 
 
-        var result = _database.Increment(new RedisCacheKey(redisKey), fieldName, value, flag);
+        var result = _database.Increment(redisKey, fieldName, value, flag);
         await result.ExecuteAsync();
 
 
-        result.CacheKey.ToString().Should().Be(redisKey);
+        result.CacheKey.Should().Be(redisKey);
         result.Command.Should().Be("HINCRBY");
         result.Fields.Should().BeEquivalentTo(fieldName);
         await _database.Received(1).HashIncrementAsync(redisKey, new RedisValue(fieldName), value, flag);
@@ -58,11 +57,11 @@ public class CommandsTests
         var time = new TimeSpan(1, 2, 3, 4);
 
 
-        var result = _database.Expire(new RedisCacheKey(redisKey), time, flag);
+        var result = _database.Expire(redisKey, time, flag);
         await result.ExecuteAsync();
 
 
-        result.CacheKey.ToString().Should().Be(redisKey);
+        result.CacheKey.Should().Be(redisKey);
         result.Command.Should().Be("EXPIRE");
         result.Fields.Should().BeEmpty();
         await _database.Received(1).KeyExpireAsync(redisKey, time, flag);
@@ -76,11 +75,11 @@ public class CommandsTests
         var redisKey = new RedisKey("test");
 
 
-        var result = _database.Delete(new RedisCacheKey(redisKey), flag);
+        var result = _database.Delete(redisKey, flag);
         await result.ExecuteAsync();
 
 
-        result.CacheKey.ToString().Should().Be(redisKey);
+        result.CacheKey.Should().Be(redisKey);
         result.Command.Should().Be("DEL");
         result.Fields.Should().BeEmpty();
         await _database.Received(1).KeyDeleteAsync(redisKey, flag);
@@ -95,11 +94,11 @@ public class CommandsTests
         var fieldName = "field2";
 
 
-        var result = _database.Delete(new RedisCacheKey(redisKey), fieldName, flag);
+        var result = _database.Delete(redisKey, fieldName, flag);
         await result.ExecuteAsync();
 
 
-        result.CacheKey.ToString().Should().Be(redisKey);
+        result.CacheKey.Should().Be(redisKey);
         result.Command.Should().Be("HDEL");
         result.Fields.Should().BeEquivalentTo(fieldName);
         await _database.Received(1).HashDeleteAsync(redisKey, new RedisValue(fieldName), flag);
@@ -114,11 +113,11 @@ public class CommandsTests
         var value = new { field1 = "f1", field2 = "f2" };
 
 
-        var result = _database.Set(new RedisCacheKey(redisKey), value, flag);
+        var result = _database.Set(redisKey, value, flag);
         await result.ExecuteAsync();
 
 
-        result.CacheKey.ToString().Should().Be(redisKey);
+        result.CacheKey.Should().Be(redisKey);
         result.Command.Should().Be("HMSET");
         result.Fields.Should().BeEquivalentTo("field1", "field2");
         await _database.Received(1).HashSetAsync(
@@ -137,11 +136,11 @@ public class CommandsTests
         var value = new { field1 = "f1" };
 
 
-        var result = _database.Set(new RedisCacheKey(redisKey), value, flag);
+        var result = _database.Set(redisKey, value, flag);
         await result.ExecuteAsync();
 
 
-        result.CacheKey.ToString().Should().Be(redisKey);
+        result.CacheKey.Should().Be(redisKey);
         result.Command.Should().Be("HSET");
         result.Fields.Should().BeEquivalentTo("field1");
         await _database.Received(1).HashSetAsync(redisKey, new RedisValue("field1"), new RedisValue("f1"), Arg.Any<When>(), flag);
@@ -154,7 +153,7 @@ public class CommandsTests
     public void Set_with_argument_causes_ArgumentNullException(string fieldName, string value, bool expectedError)
     {
         var act = () => _database.Set(
-            new RedisCacheKey(new RedisKey("cacheKey")),
+            new RedisKey("cacheKey"),
             fieldName,
             value,
             When.Always,
@@ -178,19 +177,19 @@ public class CommandsTests
         var fieldName2 = "fieldName";
 
 
-        var writer = _database.Set(new RedisCacheKey(redisKey), fieldName, string.Empty, When.Always, CommandFlags.DemandMaster);
+        var writer = _database.Set(redisKey, fieldName, string.Empty, When.Always, CommandFlags.DemandMaster);
         await writer.ExecuteAsync();
 
-        var writer2 = _database.Set(new RedisCacheKey(redisKey), fieldName2, new List<string>(), When.Always, CommandFlags.FireAndForget);
+        var writer2 = _database.Set(redisKey, fieldName2, new List<string>(), When.Always, CommandFlags.FireAndForget);
         await writer2.ExecuteAsync();
 
 
-        writer.CacheKey.ToString().Should().Be(redisKey);
+        writer.CacheKey.Should().Be(redisKey);
         writer.Command.Should().Be("HDEL");
         writer.Fields.Should().BeEquivalentTo(fieldName);
         await _database.Received(1).HashDeleteAsync(redisKey, new RedisValue(fieldName), CommandFlags.DemandMaster);
 
-        writer2.CacheKey.ToString().Should().Be(redisKey);
+        writer2.CacheKey.Should().Be(redisKey);
         writer2.Command.Should().Be("HDEL");
         writer2.Fields.Should().BeEquivalentTo(fieldName2);
         await _database.Received(1).HashDeleteAsync(redisKey, new RedisValue(fieldName2), CommandFlags.FireAndForget);
@@ -207,11 +206,11 @@ public class CommandsTests
         var value = "testValue";
 
 
-        var writer = _database.Set(new RedisCacheKey(redisKey), fieldName, value, when, flag);
+        var writer = _database.Set(redisKey, fieldName, value, when, flag);
         await writer.ExecuteAsync();
 
 
-        writer.CacheKey.ToString().Should().Be(redisKey);
+        writer.CacheKey.Should().Be(redisKey);
         writer.Command.Should().Be(expectedCommand);
         writer.Fields.Should().BeEquivalentTo(fieldName);
         await _database.Received(1).HashSetAsync(redisKey, new RedisValue(fieldName), new RedisValue(value), when, flag);
@@ -225,11 +224,11 @@ public class CommandsTests
         var fieldName = "field1";
 
 
-        var result = _database.Get(new RedisCacheKey(redisKey), fieldName);
+        var result = _database.Get(redisKey, fieldName);
         await result.ExecuteAsync();
 
 
-        result.CacheKey.ToString().Should().Be(redisKey);
+        result.CacheKey.Should().Be(redisKey);
         result.Command.Should().Be("HGET");
         result.Fields.Should().BeEquivalentTo(fieldName);
         await _database.Received(1).HashGetAsync(redisKey, new RedisValue(fieldName));
@@ -243,11 +242,11 @@ public class CommandsTests
         var fieldName2 = "field2";
 
 
-        var result = _database.Get(new RedisCacheKey(redisKey), fieldName, fieldName2);
+        var result = _database.Get(redisKey, fieldName, fieldName2);
         await result.ExecuteAsync();
 
 
-        result.CacheKey.ToString().Should().Be(redisKey);
+        result.CacheKey.Should().Be(redisKey);
         result.Command.Should().Be("HMGET");
         result.Fields.Should().BeEquivalentTo(fieldName, fieldName2);
         await _database.Received(1).HashGetAsync(redisKey,
@@ -262,11 +261,11 @@ public class CommandsTests
         var fieldName2 = "field2";
 
 
-        var result = _database.Get<FakeRedisTestModel>(new RedisCacheKey(redisKey), fieldName, fieldName2);
+        var result = _database.Get<FakeRedisTestModel>(redisKey, fieldName, fieldName2);
         await result.ExecuteAsync();
 
 
-        result.CacheKey.ToString().Should().Be(redisKey);
+        result.CacheKey.Should().Be(redisKey);
         result.Command.Should().Be("HMGET");
         result.Fields.Should().BeEquivalentTo(fieldName, fieldName2);
         await _database.Received(1).HashGetAsync(redisKey,
@@ -280,11 +279,11 @@ public class CommandsTests
         var fieldName = "field1";
 
 
-        var result = _database.Get<FakeRedisTestModel>(new RedisCacheKey(redisKey), fieldName);
+        var result = _database.Get<FakeRedisTestModel>(redisKey, fieldName);
         await result.ExecuteAsync();
 
 
-        result.CacheKey.ToString().Should().Be(redisKey);
+        result.CacheKey.Should().Be(redisKey);
         result.Command.Should().Be("HGET");
         result.Fields.Should().BeEquivalentTo(fieldName);
         await _database.Received(1).HashGetAsync(redisKey,
@@ -300,14 +299,14 @@ public class CommandsTests
         var fieldName = "field1";
 
 
-        var reader = _database.Get<FakeRedisTestModel>(new RedisCacheKey(redisKey), fieldName);
+        var reader = _database.Get<FakeRedisTestModel>(redisKey, fieldName);
         await reader.ExecuteAsync();
         var result = reader.GetResult();
 
 
         result.Length.Should().Be(1);
         result.First().Should().Be(expectedValue);
-        reader.CacheKey.ToString().Should().Be(redisKey);
+        reader.CacheKey.Should().Be(redisKey);
         reader.Command.Should().Be("HGET");
         reader.Fields.Should().BeEquivalentTo(fieldName);
         await _database.Received(1).HashGetAsync(redisKey,
@@ -323,14 +322,14 @@ public class CommandsTests
         var fieldName = "field1";
 
 
-        var reader = _database.Get(new RedisCacheKey(redisKey), fieldName);
+        var reader = _database.Get(redisKey, fieldName);
         await reader.ExecuteAsync();
         var result = reader.GetResult();
 
 
         result.Length.Should().Be(1);
         result.First().Should().Be(expectedValue);
-        reader.CacheKey.ToString().Should().Be(redisKey);
+        reader.CacheKey.Should().Be(redisKey);
         reader.Command.Should().Be("HGET");
         reader.Fields.Should().BeEquivalentTo(fieldName);
         await _database.Received(1).HashGetAsync(redisKey,
@@ -347,7 +346,7 @@ public class CommandsTests
         var fieldName2 = "field2";
 
 
-        var reader = _database.Get<FakeRedisTestModel>(new RedisCacheKey(redisKey), fieldName, fieldName2);
+        var reader = _database.Get<FakeRedisTestModel>(redisKey, fieldName, fieldName2);
         await reader.ExecuteAsync();
         var result = reader.GetResult();
 
@@ -355,7 +354,7 @@ public class CommandsTests
         result.Length.Should().Be(2);
         result.First().Should().Be(expectedValue.First());
         result.Last().Should().Be(expectedValue.Last());
-        reader.CacheKey.ToString().Should().Be(redisKey);
+        reader.CacheKey.Should().Be(redisKey);
         reader.Command.Should().Be("HMGET");
         reader.Fields.Should().BeEquivalentTo(fieldName, fieldName2);
         await _database.Received(1).HashGetAsync(redisKey,
@@ -372,7 +371,7 @@ public class CommandsTests
         var fieldName2 = "field2";
 
 
-        var reader = _database.Get(new RedisCacheKey(redisKey), fieldName, fieldName2);
+        var reader = _database.Get(redisKey, fieldName, fieldName2);
         await reader.ExecuteAsync();
         var result = reader.GetResult();
 
@@ -380,7 +379,7 @@ public class CommandsTests
         result.Length.Should().Be(2);
         result.First().Should().Be(expectedValue.First());
         result.Last().Should().Be(expectedValue.Last());
-        reader.CacheKey.ToString().Should().Be(redisKey);
+        reader.CacheKey.Should().Be(redisKey);
         reader.Command.Should().Be("HMGET");
         reader.Fields.Should().BeEquivalentTo(fieldName, fieldName2);
         await _database.Received(1).HashGetAsync(redisKey,

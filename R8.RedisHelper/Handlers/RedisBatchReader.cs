@@ -15,9 +15,9 @@ namespace R8.RedisHelper.Handlers
             _database = database;
         }
 
-        public void Get(RedisCacheKey cacheKey, params string[] fields)
+        public void Get(RedisKey redisKey, params string[] fields)
         {
-            var reader = _database.Get<T>(cacheKey, fields);
+            var reader = _database.Get<T>(redisKey, fields);
             Readers.Add(reader);
         }
     }

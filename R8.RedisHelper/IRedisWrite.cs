@@ -1,5 +1,3 @@
-using R8.RedisHelper.Models;
-
 namespace R8.RedisHelper
 {
     public interface IRedisWrite
@@ -14,48 +12,48 @@ namespace R8.RedisHelper
         /// <para>https://redis.io/commands/hset/<br />https://redis.io/commands/hsetnx/</para>
         /// </summary>
         /// <exception cref="ArgumentNullException"></exception>
-        void Set<TValue>(RedisCacheKey cacheKey, string field, TValue value, When when = When.Always);
+        void Set<TValue>(RedisKey redisKey, string field, TValue value, When when = When.Always);
 
         /// <summary>
         /// <inheritdoc cref="Set"/>
         /// </summary>
         /// <exception cref="ArgumentNullException"></exception>
-        void Set<T>(RedisCacheKey cacheKey, T model) where T : class, new();
+        void Set<T>(RedisKey redisKey, T model) where T : class, new();
 
         /// <summary>
         /// Execute the command using HMSET. If the number of fields is 1, it will be executed using HSET.
         /// <para>https://redis.io/commands/hmset/<br />https://redis.io/commands/hset/</para>
         /// </summary>
-        void Set(RedisCacheKey cacheKey, object values);
+        void Set(RedisKey redisKey, object values);
 
         /// <summary>
         /// Executes the command using DEL.
         /// <para>https://redis.io/commands/del/</para>
         /// </summary>
-        void Delete(RedisCacheKey cacheKey);
+        void Delete(RedisKey redisKey);
 
         /// <summary>
         /// Executes the command using HDEL.
         /// <para>https://redis.io/commands/hdel/</para>
         /// </summary>
-        void Delete(RedisCacheKey cacheKey, string field);
+        void Delete(RedisKey redisKey, string field);
 
         /// <summary>
         /// Executes the command using HINCRBY.
         /// <para>https://redis.io/commands/hincrby/</para>
         /// </summary>
-        void Increment(RedisCacheKey cacheKey, string field, long value = 1L);
+        void Increment(RedisKey redisKey, string field, long value = 1L);
 
         /// <summary>
         /// Executes the command using INCR.
         /// <para>https://redis.io/commands/incr/</para>
         /// </summary>
-        void Increment(RedisCacheKey cacheKey, long value = 1L);
+        void Increment(RedisKey redisKey, long value = 1L);
 
         /// <summary>
         /// Executes the command using EXPIRE.
         /// <para>https://redis.io/commands/expire/</para>
         /// </summary>
-        void Expire(RedisCacheKey cacheKey, TimeSpan time);
+        void Expire(RedisKey redisKey, TimeSpan time);
     }
 }

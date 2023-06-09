@@ -4,11 +4,11 @@ namespace R8.RedisHelper.Models
     {
         internal RedisCache(RedisKey key, Dictionary<string, RedisValue> value)
         {
-            Key = new RedisCacheKey(key);
+            Key = key;
             Value = value;
         }
 
-        public RedisCacheKey Key { get; }
+        public RedisKey Key { get; }
 
         /// <summary>
         /// Gets the model from the cached values.

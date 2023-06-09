@@ -1,7 +1,6 @@
 ﻿using FluentAssertions;
 using NSubstitute;
 using R8.RedisHelper.Handlers;
-using R8.RedisHelper.Models;
 using R8.RedisHelper.Utils;
 using StackExchange.Redis;
 
@@ -16,7 +15,7 @@ namespace R8.RedisHelper.Tests
         [Fact]
         public async Task Get_method_should_call_dataBase_HashGetAsync_method_with_correct_fields()
         {
-            var redisKey = RedisCacheKey.Create("test");
+            var redisKey = new RedisKey("test");
             var fields = new[] { "Field1", "Field2", "Field3", "Field5" };
             RedisValue[] capturedRedisValue = null;
             RedisKey capturedRedisKey;
@@ -28,9 +27,9 @@ namespace R8.RedisHelper.Tests
 
 
             Sut.Readers.Count.Should().Be(1);
-            await _database.Received(1).HashGetAsync(new RedisKey(redisKey), Arg.Any<RedisValue[]>());
+            await _database.Received(1).HashGetAsync(redisKey, Arg.Any<RedisValue[]>());
 
-            capturedRedisKey.Should().Be(new RedisKey(redisKey));
+            capturedRedisKey.Should().Be(redisKey);
             capturedRedisValue.Should().AllSatisfy(x => { fields.Select(x => x.ToCamelCase()).Should().Contain(x.ToString()); });
         }
 
@@ -39,7 +38,7 @@ namespace R8.RedisHelper.Tests
         [InlineData(4)]
         public async Task N_times_calling_Get_method_causes__n_times_dataBase_HashGetAsync_method_call(int times)
         {
-            var redisKey = RedisCacheKey.Create("test");
+            var redisKey = new RedisKey("test");
             var executingTimes = times - 1;
             var fields = new[] { "Field1", "Field2", "Field3", "Field5" };
 
@@ -51,7 +50,7 @@ namespace R8.RedisHelper.Tests
 
 
             Sut.Readers.Count.Should().Be(times);
-            await _database.Received(executingTimes).HashGetAsync(new RedisKey(redisKey), Arg.Any<RedisValue[]>());
+            await _database.Received(executingTimes).HashGetAsync(redisKey, Arg.Any<RedisValue[]>());
         }
     }
 }

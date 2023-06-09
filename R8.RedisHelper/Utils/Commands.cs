@@ -7,10 +7,8 @@ namespace R8.RedisHelper.Utils
 {
     internal static class Commands
     {
-        public static IRedisReader Get<T>(this IDatabaseAsync database, RedisCacheKey cacheKey, params string[] fields) where T : new()
+        public static IRedisReader Get<T>(this IDatabaseAsync database, RedisKey redisKey, params string[] fields) where T : new()
         {
-            if (cacheKey == null) throw new ArgumentNullException(nameof(cacheKey));
-
             var _modelType = typeof(T);
             var props = _modelType.GetPublicProperties();
             if (fields?.Any() == true)
@@ -19,7 +17,7 @@ namespace R8.RedisHelper.Utils
                     .ToArray();
 
             var modelFields = props.ToDictionary(x => x.Name.ToCamelCase(), x => x);
-            var redisKey = cacheKey.Value;
+            
 
             RedisReaderTask<T> reader;
             if (modelFields.Count == 1)
@@ -29,7 +27,7 @@ namespace R8.RedisHelper.Utils
                 reader = new RedisReaderTask<T>
                 {
                     Command = "HGET",
-                    CacheKey = cacheKey,
+                    CacheKey = redisKey,
                     Fields = modelFields.Keys.ToArray(),
                     Action = () => database.HashGetAsync(redisKey, new RedisValue(modelField))
                 };
@@ -39,7 +37,7 @@ namespace R8.RedisHelper.Utils
                 reader = new RedisReaderTask<T>
                 {
                     Command = "HMGET",
-                    CacheKey = cacheKey,
+                    CacheKey = redisKey,
                     Fields = modelFields.Keys.ToArray(),
                     ActionWithPluralReturnType = () => database.HashGetAsync(redisKey, modelFields.Keys.Select(key => new RedisValue(key)).ToArray())
                 };
@@ -78,16 +76,12 @@ namespace R8.RedisHelper.Utils
             return reader;
         }
 
-        public static IRedisReader Get(this IDatabaseAsync database, RedisCacheKey cacheKey, params string[] fields)
+        public static IRedisReader Get(this IDatabaseAsync database, RedisKey redisKey, params string[] fields)
         {
-            if (cacheKey == null)
-                throw new ArgumentNullException(nameof(cacheKey));
             if (fields == null)
                 throw new ArgumentNullException(nameof(fields));
             if (fields.Length == 0)
                 throw new ArgumentException("Value cannot be an empty collection.", nameof(fields));
-
-            var redisKey = cacheKey.Value;
 
             RedisReaderTask reader;
             if (fields.Length == 1)
@@ -95,7 +89,7 @@ namespace R8.RedisHelper.Utils
                 reader = new RedisReaderTask
                 {
                     Command = "HGET",
-                    CacheKey = cacheKey,
+                    CacheKey = redisKey,
                     Fields = fields,
                     Action = () => database.HashGetAsync(redisKey, new RedisValue(fields[0]))
                 };
@@ -105,7 +99,7 @@ namespace R8.RedisHelper.Utils
                 reader = new RedisReaderTask
                 {
                     Command = "HMGET",
-                    CacheKey = cacheKey,
+                    CacheKey = redisKey,
                     Fields = fields,
                     ActionWithPluralReturnType = () => database.HashGetAsync(redisKey, fields.Select(key => new RedisValue(key)).ToArray())
                 };
@@ -131,10 +125,8 @@ namespace R8.RedisHelper.Utils
             return reader;
         }
 
-        public static IRedisWriter Set<TValue>(this IDatabaseAsync database, RedisCacheKey cacheKey, string field, TValue value, When when = When.Always, CommandFlags flags = CommandFlags.FireAndForget)
+        public static IRedisWriter Set<TValue>(this IDatabaseAsync database, RedisKey redisKey, string field, TValue value, When when = When.Always, CommandFlags flags = CommandFlags.FireAndForget)
         {
-            if (cacheKey == null)
-                throw new ArgumentNullException(nameof(cacheKey));
             if (field == null)
                 throw new ArgumentNullException(nameof(field));
             if (value == null)
@@ -142,11 +134,11 @@ namespace R8.RedisHelper.Utils
 
             field = field.ToCamelCase();
             var redisField = new RedisValue(field);
-            var redisKey = cacheKey.Value;
+            
 
             var writer = new RedisWriterTask<bool>
             {
-                CacheKey = cacheKey
+                CacheKey = redisKey
             };
 
             if (!value.IsOptimizable())
@@ -173,7 +165,7 @@ namespace R8.RedisHelper.Utils
             return writer;
         }
 
-        public static IRedisWriter Set(this IDatabaseAsync database, RedisCacheKey cacheKey, object values, CommandFlags flags = CommandFlags.FireAndForget)
+        public static IRedisWriter Set(this IDatabaseAsync database, RedisKey redisKey, object values, CommandFlags flags = CommandFlags.FireAndForget)
         {
             var optimizedFields = new Dictionary<string, object>();
             if (values is ReadOnlyDictionary<string, object> readOnlyDictionary)
@@ -193,9 +185,9 @@ namespace R8.RedisHelper.Utils
             if (optimizedFields.Count == 0)
                 throw new ArgumentException("No fields to set.", nameof(values));
 
-            var redisKey = cacheKey.Value;
+            
 
-            var writer = new RedisWriterTask<bool> {CacheKey = cacheKey};
+            var writer = new RedisWriterTask<bool> {CacheKey = redisKey};
             if (optimizedFields.Count == 1)
             {
                 var (key, value) = optimizedFields.First();
@@ -222,14 +214,14 @@ namespace R8.RedisHelper.Utils
             return writer;
         }
 
-        public static IRedisWriter Delete(this IDatabaseAsync database, RedisCacheKey cacheKey, CommandFlags flags = CommandFlags.FireAndForget)
+        public static IRedisWriter Delete(this IDatabaseAsync database, RedisKey redisKey, CommandFlags flags = CommandFlags.FireAndForget)
         {
-            var redisKey = cacheKey.Value;
+            
 
             var writer = new RedisWriterTask<bool>
             {
                 Command = "DEL",
-                CacheKey = cacheKey,
+                CacheKey = redisKey,
                 Fields = Array.Empty<string>(),
                 ActionWithReturnType = () => database.KeyDeleteAsync(redisKey, flags: flags)
             };
@@ -237,16 +229,16 @@ namespace R8.RedisHelper.Utils
             return writer;
         }
 
-        public static IRedisWriter Delete(this IDatabaseAsync database, RedisCacheKey cacheKey, string field, CommandFlags flags = CommandFlags.FireAndForget)
+        public static IRedisWriter Delete(this IDatabaseAsync database, RedisKey redisKey, string field, CommandFlags flags = CommandFlags.FireAndForget)
         {
             field = field.ToCamelCase();
             var redisField = new RedisValue(field);
-            var redisKey = cacheKey.Value;
+            
 
             var writer = new RedisWriterTask<bool>
             {
                 Command = "HDEL",
-                CacheKey = cacheKey,
+                CacheKey = redisKey,
                 Fields = new[] {field},
                 ActionWithReturnType = () => database.HashDeleteAsync(redisKey, redisField, flags: flags)
             };
@@ -254,14 +246,14 @@ namespace R8.RedisHelper.Utils
             return writer;
         }
 
-        public static IRedisWriter Expire(this IDatabaseAsync database, RedisCacheKey cacheKey, TimeSpan time, CommandFlags flags = CommandFlags.FireAndForget)
+        public static IRedisWriter Expire(this IDatabaseAsync database, RedisKey redisKey, TimeSpan time, CommandFlags flags = CommandFlags.FireAndForget)
         {
-            var redisKey = cacheKey.Value;
+            
 
             var writer = new RedisWriterTask<bool>
             {
                 Command = "EXPIRE",
-                CacheKey = cacheKey,
+                CacheKey = redisKey,
                 Fields = Array.Empty<string>(),
                 Values = new[] {RedisValue.Unbox((int) time.TotalSeconds), },
                 ActionWithReturnType = () => database.KeyExpireAsync(redisKey, time, flags: flags)
@@ -270,14 +262,14 @@ namespace R8.RedisHelper.Utils
             return writer;
         }
 
-        public static IRedisWriter Increment(this IDatabaseAsync database, RedisCacheKey cacheKey, long value = 1L, CommandFlags flags = CommandFlags.FireAndForget)
+        public static IRedisWriter Increment(this IDatabaseAsync database, RedisKey redisKey, long value = 1L, CommandFlags flags = CommandFlags.FireAndForget)
         {
-            var redisKey = cacheKey.Value;
+            
 
             var writer = new RedisWriterTask<long>
             {
                 Command = "INCR",
-                CacheKey = cacheKey,
+                CacheKey = redisKey,
                 Fields = Array.Empty<string>(),
                 ActionWithReturnType = () => database.StringIncrementAsync(redisKey, value, flags)
             };
@@ -285,16 +277,16 @@ namespace R8.RedisHelper.Utils
             return writer;
         }
 
-        public static IRedisWriter Increment(this IDatabaseAsync database, RedisCacheKey cacheKey, string field, long value = 1L, CommandFlags flags = CommandFlags.FireAndForget)
+        public static IRedisWriter Increment(this IDatabaseAsync database, RedisKey redisKey, string field, long value = 1L, CommandFlags flags = CommandFlags.FireAndForget)
         {
             field = field.ToCamelCase();
             var redisField = new RedisValue(field);
-            var redisKey = cacheKey.Value;
+            
 
             var writer = new RedisWriterTask<long>
             {
                 Command = "HINCRBY",
-                CacheKey = cacheKey,
+                CacheKey = redisKey,
                 Fields = new[] {field},
                 ActionWithReturnType = () => database.HashIncrementAsync(redisKey, redisField, value: value, flags: flags)
             };
