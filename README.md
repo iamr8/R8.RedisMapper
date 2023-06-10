@@ -262,3 +262,6 @@ public async Task<FooModel[]> FooAsync()
 ### Must Read
 The last param of most of the methods is `fireAndForget`, so you can set it to `true` if you don't want to wait for the result.
 _the default value is `true`._
+
+---
+**Thanks to [Ali Meshkini](https://github.com/meshkini) for writing unit tests:v:**
