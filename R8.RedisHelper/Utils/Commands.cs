@@ -293,5 +293,43 @@ namespace R8.RedisHelper.Utils
 
             return writer;
         }
+        
+        public static IRedisWriter Decrement(this IDatabaseAsync database, RedisKey redisKey, long value = 1L, long min = long.MinValue, CommandFlags flags = CommandFlags.FireAndForget)
+        {
+            var writer = new RedisWriterTask<long>
+            {
+                Command = "DECR",
+                CacheKey = redisKey,
+                Fields = Array.Empty<string>(),
+                ActionWithReturnType = () => database.StringDecrementAsync(redisKey, value, flags)
+            };
+
+            var luaScript = $@"
+local value = redis.call('GET', KEYS[1])
+if value and tonumber(value) > {min} then 
+    return redis.call('DECR', KEYS[1]) 
+else 
+    return value 
+end";
+
+            database.ScriptEvaluateAsync(luaScript, new[] { new RedisKey(value.ToString()) });
+            return writer;
+        }
+        
+        public static IRedisWriter Decrement(this IDatabaseAsync database, RedisKey redisKey, string field, long value = 1L, CommandFlags flags = CommandFlags.FireAndForget)
+        {
+            field = field.ToCamelCase();
+            var redisField = new RedisValue(field);
+
+            var writer = new RedisWriterTask<long>
+            {
+                Command = "HINCRBY",
+                CacheKey = redisKey,
+                Fields = new[] { field },
+                ActionWithReturnType = () => database.HashDecrementAsync(redisKey, redisField, value: value, flags: flags)
+            };
+
+            return writer;
+        }
     }
 }

@@ -81,6 +81,28 @@ namespace R8.RedisHelper
         Task<RedisCache<long>> IncrementAsync(RedisKey redisKey, string field, long value = 1, bool fireAndForget = true);
 
         /// <summary>
+        /// Executes the command using DECR.
+        /// <para>https://redis.io/commands/decr/</para>
+        /// </summary>
+        /// <param name="redisKey">The cache key.</param>
+        /// <param name="value">The decrement value.</param>
+        /// <param name="min"></param>
+        /// <param name="fireAndForget">If true, the command will be executed using FireAndForget.</param>
+        /// <returns>A <see cref="RedisCache{T}"/> with the result. If <see cref="fireAndForget"/> is true, the underlying value will be default value.</returns>
+        Task<RedisCache<long>> DecrementAsync(RedisKey redisKey, long value = 1L, long min = long.MinValue, bool fireAndForget = false);
+
+        /// <summary>
+        /// Executes the command using HINCRBY.
+        /// <para>https://redis.io/commands/hincrby/</para>
+        /// </summary>
+        /// <param name="redisKey">The cache key.</param>
+        /// <param name="field">The field to increment.</param>
+        /// <param name="value">The decrement value.</param>
+        /// <param name="fireAndForget">If true, the command will be executed using FireAndForget.</param>
+        /// <returns>A <see cref="RedisCache{T}"/> with the result. If <see cref="fireAndForget"/> is true, the underlying value will be default value.</returns>
+        Task<RedisCache<long>> DecrementAsync(RedisKey redisKey, string field, long value = 1, bool fireAndForget = true);
+
+        /// <summary>
         /// Executes the command using DEL.
         /// <para>https://redis.io/commands/del/</para>
         /// </summary>

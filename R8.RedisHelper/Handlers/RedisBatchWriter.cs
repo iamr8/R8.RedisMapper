@@ -59,6 +59,18 @@ namespace R8.RedisHelper.Handlers
             Writers.Add(writer);
         }
 
+        public void Decrement(RedisKey redisKey, string field, long value = 1L)
+        {
+            var writer = _database.Decrement(redisKey, field, value, _flags);
+            Writers.Add(writer);
+        }
+    
+        public void Decrement(RedisKey redisKey, long value = 1L, long min = long.MinValue)
+        {
+            var writer = _database.Decrement(redisKey, value, min, _flags);
+            Writers.Add(writer);
+        }
+        
         public void Expire(RedisKey redisKey, TimeSpan time)
         {
             var writer = _database.Expire(redisKey, time, _flags);

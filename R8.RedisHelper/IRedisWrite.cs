@@ -51,6 +51,18 @@ namespace R8.RedisHelper
         void Increment(RedisKey redisKey, long value = 1L);
 
         /// <summary>
+        /// Executes the command using DECR.
+        /// <para>https://redis.io/commands/decr/</para>
+        /// </summary>
+        void Decrement(RedisKey redisKey, long value = 1L, long min = long.MinValue);
+    
+        /// <summary>
+        /// Executes the command using HINCRBY.
+        /// <para>https://redis.io/commands/hincrby/</para>
+        /// </summary>
+        void Decrement(RedisKey redisKey, string field, long value = 1L);
+        
+        /// <summary>
         /// Executes the command using EXPIRE.
         /// <para>https://redis.io/commands/expire/</para>
         /// </summary>

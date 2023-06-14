@@ -29,6 +29,7 @@ Inject `ICacheProvider` to your class constructor and use it.
 - [ExistsAsync](#existsasync)
 - [DeleteAsync](#deleteasync)
 - [IncrementAsync](#incrementasync)
+- [DecrementAsync](#decrementasync)
 - [ExpireAsync](#expireasync)
 - [Scan](#scan)
 - [FlushAsync](#flushasync)
@@ -178,6 +179,35 @@ public async Task<long> FooAsync()
 {
     var cacheKey = new RedisKey("foo:bar");
     var updatedValue = await _cacheProvider.IncrementAsync(cacheKey, "retry", 1);
+    if (updatedValue.IsNull)
+        throw new Exception("Something went wrong!");
+        
+    return updatedValue.Value;
+}
+```
+
+---
+#### DecrementAsync
+**1)** When you want to decrement a cached key:
+```csharp
+public async Task<long> FooAsync()
+{
+    var cacheKey = new RedisKey("foo");
+    var updatedValue = await _cacheProvider.DecrementAsync(cacheKey, 1);
+    if (updatedValue.IsNull)
+        throw new Exception("Something went wrong!");
+        
+    return updatedValue.Value;
+}
+```
+_Also, you can set a `minimum value` to avoid the cached value to be decremented below that value._
+
+**2)** When you want to increment a cached hash key
+```csharp
+public async Task<long> FooAsync()
+{
+    var cacheKey = new RedisKey("foo:bar");
+    var updatedValue = await _cacheProvider.DecrementAsync(cacheKey, "retry", 1);
     if (updatedValue.IsNull)
         throw new Exception("Something went wrong!");
         

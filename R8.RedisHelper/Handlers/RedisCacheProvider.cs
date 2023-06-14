@@ -293,6 +293,28 @@ namespace R8.RedisHelper.Handlers
             return c;
         }
 
+        public async Task<RedisCache<long>> DecrementAsync(RedisKey redisKey, string field, long value = 1, bool fireAndForget = true)
+        {
+            var writer = _database.Decrement(redisKey, field, value, fireAndForget ? CommandFlags.FireAndForget : CommandFlags.None);
+            await writer.ExecuteAsync();
+            var result = writer.GetResult<long>();
+            writer.WriteToLog(_logger);
+
+            var c = new RedisCache<long>(redisKey, result);
+            return c;
+        }
+
+        public async Task<RedisCache<long>> DecrementAsync(RedisKey redisKey, long value = 1, long min = long.MinValue, bool fireAndForget = false)
+        {
+            var writer = _database.Decrement(redisKey, value, min, fireAndForget ? CommandFlags.FireAndForget : CommandFlags.None);
+            await writer.ExecuteAsync();
+            var result = writer.GetResult<long>();
+            writer.WriteToLog(_logger);
+
+            var c = new RedisCache<long>(redisKey, result);
+            return c;
+        }
+        
         public async Task<RedisCache<bool>> ExpireAsync(RedisKey redisKey, TimeSpan time, bool fireAndForget = true)
         {
             var writer = _database.Expire(redisKey, time, fireAndForget ? CommandFlags.FireAndForget : CommandFlags.None);
