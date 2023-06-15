@@ -1,6 +1,6 @@
 ﻿namespace R8.RedisHelper.Utils
 {
-    public static class RedisKetExtensions
+    public static class RedisKeyExtensions
     {
         public static IReadOnlyDictionary<string, string> GetParts(this RedisKey redisKey)
         {
