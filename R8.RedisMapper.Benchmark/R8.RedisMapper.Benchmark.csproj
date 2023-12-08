@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <OutputType>Exe</OutputType>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <DebugType>pdbonly</DebugType>
+        <DebugSymbols>true</DebugSymbols>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="BenchmarkDotNet" Version="0.13.11" />
+        <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.13.11" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\R8.RedisMapper\R8.RedisMapper.csproj" />
+    </ItemGroup>
+
+</Project>

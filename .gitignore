@@ -6,3 +6,4 @@ riderModule.iml
 *.csproj.user
 *.sln.dotsettings.user
 .idea/
+.vs/
