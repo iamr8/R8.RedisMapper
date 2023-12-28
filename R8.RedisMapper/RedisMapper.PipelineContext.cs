@@ -7,12 +7,12 @@ namespace R8.RedisMapper
     {
         /// <summary>
         /// Gets or sets a value indicating whether to ignore the default value of a property.
-        /// When set to true, the property's default value will be ignored by the program to be cached.
+        /// When set to true, the property's default value will be ignored by the program to be cached. Default: The value set in <see cref="Configuration.IgnoreDefaultValues"/>.
         /// </summary>
         public bool? IgnoreDefaultValue { get; set; }
 
         /// <summary>
-        /// Gets or sets the options for the JSON serializer.
+        /// Gets or sets the options for the JSON serializer. Default: The serializer set in <see cref="Configuration.SerializerOptions"/>.
         /// </summary>
         /// <remarks>
         /// The <see cref="SerializerOptions"/> property allows customizing the behavior of the JSON serializer.
@@ -21,12 +21,12 @@ namespace R8.RedisMapper
         public JsonSerializerOptions SerializerOptions { get; set; }
 
         /// <summary>
-        /// Gets or sets the Redis Value Formatter.
+        /// Gets or sets the Redis Value Formatter. Default: The formatter set in <see cref="Configuration.FieldFormatter"/>.
         /// </summary>
         public RedisFieldFormatter FieldFormatter { get; set; }
 
         /// <summary>
-        /// Gets or sets the Redis Value Formatters.
+        /// Gets or sets the Redis Value Formatters. Default: The formatters set in <see cref="Configuration.ValueFormatters"/>.
         /// </summary>
         public IList<IRedisValueFormatter> ValueFormatters { get; set; } = new List<IRedisValueFormatter>();
     }
