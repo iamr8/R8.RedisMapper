@@ -26,13 +26,7 @@ namespace R8.RedisMapper.Tests
             {
                 (_connectionMultiplexer, _database, _batch) = Utils.CreateMock();
 
-                _loggerFactory = new LoggerFactory().AddXunit(outputHelper, o => o.MinLevel = LogLevel.Debug);
-            }
-
-            public class Dummy
-            {
-                public string Name { get; set; }
-                public string Surname { get; set; }
+                _loggerFactory = new LoggerFactory().AddXunit(outputHelper, o => o.MinimumLevel = LogLevel.Debug);
             }
 
             [Fact]
@@ -43,7 +37,7 @@ namespace R8.RedisMapper.Tests
 
                 _database.HashGetAsync(Arg.Any<RedisKey>(), Arg.Any<RedisValue[]>(), Arg.Any<CommandFlags>()).Returns(Array.Empty<RedisValue>());
 
-                var actual = await _database.HashGetAsync<Dummy>(key, null);
+                var actual = await _database.HashGetAsync<Tests.Dummy2>(key, null);
 
                 await _database.Received(1).HashGetAsync(key, Arg.Is<RedisValue[]>(x => x[0] == (RedisValue)"name" && x[1] == (RedisValue)"surname"), Arg.Is<CommandFlags>(x => x == CommandFlags.None));
                 actual.Should().BeNull();
@@ -56,7 +50,7 @@ namespace R8.RedisMapper.Tests
 
                 _database.HashGetAsync(Arg.Any<RedisKey>(), Arg.Any<RedisValue[]>(), Arg.Any<CommandFlags>()).Returns(Array.Empty<RedisValue>());
 
-                var actual = await _database.HashGetAsync<Dummy>(key, options =>
+                var actual = await _database.HashGetAsync<Tests.Dummy2>(key, options =>
                 {
                     options.AllProperties = true;
                 });
@@ -72,7 +66,7 @@ namespace R8.RedisMapper.Tests
 
                 _database.HashGetAsync(Arg.Any<RedisKey>(), Arg.Any<RedisValue[]>(), Arg.Any<CommandFlags>()).Returns(new RedisValue[] { "foo", "bar" });
 
-                var actual = await _database.HashGetAsync<Dummy>(key);
+                var actual = await _database.HashGetAsync<Tests.Dummy2>(key);
 
                 await _database.Received(1).HashGetAsync(key, Arg.Is<RedisValue[]>(x => x[0] == (RedisValue)"name" && x[1] == (RedisValue)"surname"), Arg.Is<CommandFlags>(x => x == CommandFlags.None));
                 actual.Should().NotBeNull();
@@ -88,7 +82,7 @@ namespace R8.RedisMapper.Tests
 
                 _database.HashGetAsync(Arg.Any<RedisKey>(), Arg.Any<RedisValue[]>(), Arg.Any<CommandFlags>()).Returns(Array.Empty<RedisValue>());
 
-                var actual = await _database.HashGetAsync<Dummy>(key, options =>
+                var actual = await _database.HashGetAsync<Tests.Dummy2>(key, options =>
                 {
                     options.AllProperties = false;
                     foreach (var field in fields)
@@ -107,7 +101,7 @@ namespace R8.RedisMapper.Tests
 
                 _database.HashGetAsync(Arg.Any<RedisKey>(), Arg.Any<RedisValue[]>(), Arg.Any<CommandFlags>()).Returns(new RedisValue[] { "foo" });
 
-                var actual = await _database.HashGetAsync<Dummy>(key, options =>
+                var actual = await _database.HashGetAsync<Tests.Dummy2>(key, options =>
                 {
                     options.AllProperties = false;
                     foreach (var field in fields)
@@ -182,42 +176,6 @@ namespace R8.RedisMapper.Tests
                 actual.Should().NotBeNull();
                 actual["name"].Should().Be("foo");
                 actual["surname"].Should().Be("bar");
-            }
-        }
-
-        public class DummySetByGenericType
-        {
-            private readonly IDatabaseAsync _database = Substitute.For<IDatabaseAsync>();
-
-            [Fact]
-            public async Task should_set_value_by_specific_fields()
-            {
-                var key = new RedisKey("foo");
-                var value = false;
-
-                _database.StringSetAsync(Arg.Any<RedisKey>(), Arg.Any<RedisValue>(), Arg.Any<TimeSpan?>(), Arg.Any<When>(), Arg.Any<CommandFlags>()).Returns(true);
-
-                var actual = await _database.SetAsync(key, (RedisValue)value, null, When.Always, CommandFlags.None);
-                actual.Should().BeTrue();
-
-                await _database.Received(1).StringSetAsync(key, Arg.Is<RedisValue>(x => x == (RedisValue)value), Arg.Is<TimeSpan?>(x => x == null), Arg.Is<When>(x => x == When.Always), Arg.Is<CommandFlags>(x => x == CommandFlags.None));
-            }
-
-            [Fact]
-            public async Task should_delete_value_by_specific_fields_when_value_is_null()
-            {
-                var key = new RedisKey("foo");
-                var value = false;
-
-                Configuration.IgnoreDefaultValues = true;
-
-                _database.KeyDeleteAsync(Arg.Any<RedisKey>(), Arg.Any<CommandFlags>()).Returns(true);
-
-                var actual = await _database.SetAsync(key, value, null, When.Always, CommandFlags.None);
-                actual.Should().BeTrue();
-
-                await _database.DidNotReceive().StringSetAsync(key, Arg.Is<RedisValue>(x => x == (RedisValue)value), Arg.Is<TimeSpan?>(x => x == null), Arg.Is<When>(x => x == When.Always), Arg.Is<CommandFlags>(x => x == CommandFlags.None));
-                await _database.Received(1).KeyDeleteAsync(key, Arg.Is<CommandFlags>(x => x == CommandFlags.None));
             }
         }
 

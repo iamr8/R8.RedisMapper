@@ -29,6 +29,6 @@ namespace R8.RedisMapper
         /// <summary>
         /// Gets or sets the Redis Value Formatter.
         /// </summary>
-        public static IList<IRedisValueFormatter> ValueFormatters { get; } = new List<IRedisValueFormatter>();
+        public static IList<IRedisValueSerializer> ValueFormatters { get; } = new List<IRedisValueSerializer>();
     }
 }

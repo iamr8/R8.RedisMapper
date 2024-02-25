@@ -5,7 +5,7 @@ using System.Linq.Expressions;
 
 namespace R8.RedisMapper
 {
-    public class PipelineContextPropertyCollection<T> : IEnumerable<string>
+    public sealed class PipelineContextPropertyCollection<T> : IEnumerable<string>
     {
         private readonly List<string> _properties = new List<string>();
 

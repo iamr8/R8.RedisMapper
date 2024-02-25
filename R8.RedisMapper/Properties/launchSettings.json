@@ -1,0 +1,9 @@
+{
+  "$schema": "http://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "Generators": {
+      "commandName": "DebugRoslynComponent",
+      "targetProject": "../R8.RedisMapper.ConsoleSample/R8.RedisMapper.ConsoleSample.csproj"
+    }
+  }
+}

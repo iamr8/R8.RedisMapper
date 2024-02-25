@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using StackExchange.Redis;
 
@@ -17,7 +18,7 @@ namespace R8.RedisMapper
         /// <param name="writerContext">The writer context to use for conversion.</param>
         /// <returns>The converted <see cref="RedisValue"/>.</returns>
         /// <exception cref="NotSupportedException">Thrown if the <see cref="JsonElement"/>'s value kind is not supported.</exception>
-        private static RedisValue GetRedisValue(this JsonElement value, IList<IRedisValueFormatter> valueFormatters, RedisValueWriterContext writerContext)
+        private static RedisValue GetRedisValue(this JsonElement value, IList<IRedisValueSerializer> valueFormatters, RedisValueWriterContext writerContext)
         {
             switch (value)
             {
@@ -46,7 +47,7 @@ namespace R8.RedisMapper
                     throw new NotSupportedException($"JsonElement with {value.ValueKind} is not supported.");
             }
         }
-
+        
         /// <summary>
         /// Converts the specified value to a <see cref="RedisValue"/> using the provided <see cref="valueFormatters"/> and <see cref="writerContext"/>.
         /// </summary>
@@ -55,34 +56,104 @@ namespace R8.RedisMapper
         /// <param name="valueFormatters">The list of value formatters.</param>
         /// <param name="writerContext">The writer context.</param>
         /// <returns>The <see cref="RedisValue"/> representation of the value.</returns>
-        public static RedisValue GetRedisValue<T>(T value, IList<IRedisValueFormatter> valueFormatters, RedisValueWriterContext writerContext)
+        public static RedisValue GetRedisValue<T>(T value, IList<IRedisValueSerializer> valueFormatters, RedisValueWriterContext writerContext)
         {
             if (value is null)
                 return RedisValue.Null;
-
-            switch (value)
-            {
-                case RedisValue valRedis:
-                {
-                    return valRedis;
-                }
-
-                case JsonElement jsonElement:
-                {
-                    return jsonElement.GetRedisValue(valueFormatters, writerContext);
-                }
-
-                default:
-                {
-                    var valueType = value.GetType();
-                    var context = new RedisValueWriterContext(writerContext, valueType);
-                    var formatter = valueFormatters.GetWriterFormatter(valueType);
-                    if (formatter != null)
-                        return formatter.Write(value, context);
-
-                    return RedisValueFormatter.Write(value, context);
-                }
-            }
+        
+            var valueType = value.GetType();
+            var context = new RedisValueWriterContext(writerContext, valueType);
+            // switch (value)
+            // {
+            //     case RedisValue valRedis:
+            //     return valRedis;
+            //
+            //     case JsonElement jsonElement:
+            //     return jsonElement.GetRedisValue(valueFormatters, writerContext);
+            //
+            //     case int valueInt:
+            //     {
+            //         var intFormatter = (RedisValueFormatter<int>)valueFormatters.GetWriterFormatter(typeof(int));
+            //         if (intFormatter != null)
+            //             return intFormatter.Write(valueInt, context);
+            //         break;
+            //     }
+            //     
+            //     case long valueLong:
+            //     {
+            //         var longFormatter = (RedisValueFormatter<long>)valueFormatters.GetWriterFormatter(typeof(long));
+            //         if (longFormatter != null)
+            //             return longFormatter.Write(valueLong, context);
+            //         break;
+            //     }
+            //     
+            //     case double valueDouble:
+            //     {
+            //         var doubleFormatter = (RedisValueFormatter<double>)valueFormatters.GetWriterFormatter(typeof(double));
+            //         if (doubleFormatter != null)
+            //             return doubleFormatter.Write(valueDouble, context);
+            //         break;
+            //     }
+            //     
+            //     case float valueFloat:
+            //     {
+            //         var floatFormatter = (RedisValueFormatter<float>)valueFormatters.GetWriterFormatter(typeof(float));
+            //         if (floatFormatter != null)
+            //             return floatFormatter.Write(valueFloat, context);
+            //         break;
+            //     }
+            //     
+            //     case decimal valueDecimal:
+            //     {
+            //         var decimalFormatter = (RedisValueFormatter<decimal>)valueFormatters.GetWriterFormatter(typeof(decimal));
+            //         if (decimalFormatter != null)
+            //             return decimalFormatter.Write(valueDecimal, context);
+            //         break;
+            //     }
+            //     
+            //     case bool valueBool:
+            //     {
+            //         var boolFormatter = (RedisValueFormatter<bool>)valueFormatters.GetWriterFormatter(typeof(bool));
+            //         if (boolFormatter != null)
+            //             return boolFormatter.Write(valueBool, context);
+            //         break;
+            //     }
+            //     
+            //     case string valueString:
+            //     {
+            //         var stringFormatter = (RedisObjectFormatter<string>)valueFormatters.GetWriterFormatter(typeof(string));
+            //         if (stringFormatter != null)
+            //             return stringFormatter.Write(valueString, context);
+            //         break;
+            //     }
+            //     
+            //     case DateTime valueDateTime:
+            //     {
+            //         var dateTimeFormatter = (RedisValueFormatter<DateTime>)valueFormatters.GetWriterFormatter(typeof(DateTime));
+            //         if (dateTimeFormatter != null)
+            //             return dateTimeFormatter.Write(valueDateTime, context);
+            //         break;
+            //     }
+            // }
+            //
+            // var formatter = valueFormatters.GetWriterFormatter(valueType);
+            // if (formatter != null)
+            // {
+            //     if (valueType.IsValueType && formatter is RedisValueFormatterInternal valueFormatter)
+            //     {
+            //         var rv = valueFormatter.WriteCore(value, context);
+            //     }
+            //     else if (formatter is RedisObjectFormatter objectFormatter)
+            //     {
+            //         throw new NotImplementedException();
+            //     }
+            //     else
+            //     {
+            //         throw new NotSupportedException($"Formatter of type {formatter.GetType()} is not supported.");
+            //     }
+            // }
+            //
+            return RedisValueFormatter.Write(value, context);
         }
 
         /// <summary>
@@ -95,7 +166,7 @@ namespace R8.RedisMapper
         /// <param name="serializationContext">The context used for value serialization.</param>
         /// <returns>An array of <see cref="HashEntry"/> objects representing the key-value pairs in the dictionary.</returns>
         /// <exception cref="InvalidOperationException">Thrown if a value in the dictionary is null or empty after formatting.</exception>
-        internal static ReadOnlyMemory<HashEntry> ToHashEntries<T>(this IDictionary<string, T> dictionary, RedisFieldFormatter fieldFormatter, IList<IRedisValueFormatter> valueFormatters, RedisValueWriterContext serializationContext)
+        internal static ReadOnlyMemory<HashEntry> ToHashEntries<T>(this IDictionary<string, T> dictionary, RedisFieldFormatter fieldFormatter, IList<IRedisValueSerializer> valueFormatters, RedisValueWriterContext serializationContext)
         {
             Memory<HashEntry> memory = new HashEntry[dictionary.Count];
 
@@ -121,22 +192,23 @@ namespace R8.RedisMapper
         /// <param name="fieldFormatter">A formatter for the field names.</param>
         /// <param name="valueFormatters">A list of formatters for property values.</param>
         /// <param name="writerContext">A context for value serialization.</param>
-        /// <typeparam name="T">The type of the model to convert.</typeparam>
+        /// <typeparam name="TObject">The type of the model object.</typeparam>
         /// <returns>A <see cref="ReadOnlyMemory{T}"/> of <see cref="HashEntry"/>.</returns>
         /// <exception cref="InvalidOperationException">Thrown when the value of a property is null or empty.</exception>
-        internal static ReadOnlyMemory<HashEntry> GetHashEntries<T>(this T model, RedisFieldFormatter fieldFormatter, IList<IRedisValueFormatter> valueFormatters, RedisValueWriterContext writerContext)
+        internal static ReadOnlyMemory<HashEntry> GetHashEntries<TObject>(this TObject model, RedisFieldFormatter fieldFormatter, IList<IRedisValueSerializer> valueFormatters, RedisValueWriterContext writerContext) where TObject : class, IRedisCacheObject
         {
-            var props = model.GetType().GetProperties(Array.Empty<string>(), fieldFormatter);
-            Memory<HashEntry> memory = new HashEntry[props.Length];
+            if (!(model is IRedisCacheObjectAdapter<TObject> adapter))
+                throw new InvalidOperationException($"It might the source generator did not generate the reflector for {model.GetType()}.");
+            
+            Memory<HashEntry> memory = new HashEntry[adapter.Properties.Length];
 
             var lastIndex = -1;
-            for (var i = 0; i < props.Length; i++)
+            foreach (var propName in adapter.Properties)
             {
-                var prop = props.Span[i];
-                var value = prop.GetValue(model, valueFormatters, writerContext);
+                var value = adapter.GetValue(model, propName);
                 if (value.IsNullOrEmpty)
-                    throw new InvalidOperationException($"The value of '{prop.FormattedName}' cannot be null or empty.");
-                memory.Span[++lastIndex] = new HashEntry(prop.FormattedName, value);
+                    throw new InvalidOperationException($"The value of '{propName}' cannot be null or empty.");
+                memory.Span[++lastIndex] = new HashEntry(fieldFormatter.GetFormatted(propName), value);
             }
 
             memory = memory[..(lastIndex + 1)];
@@ -149,8 +221,8 @@ namespace R8.RedisMapper
         /// </summary>
         /// <param name="formatters">The formatters to search in.</param>
         /// <param name="type">A type that representing the type of value.</param>
-        /// <returns>A <see cref="IRedisValueFormatter"/> object.</returns>
-        private static IRedisValueFormatter GetWriterFormatter(this IEnumerable<IRedisValueFormatter> formatters, Type type)
+        /// <returns>A <see cref="IRedisValueSerializer"/> object.</returns>
+        private static IRedisValueSerializer GetWriterFormatter(this IEnumerable<IRedisValueSerializer> formatters, Type type)
         {
             var formatter = formatters.FirstOrDefault(x => x.Type == type);
             if (formatter == null)
@@ -160,7 +232,7 @@ namespace R8.RedisMapper
             if (constructor == null)
                 return null;
 
-            var newInstance = (IRedisValueFormatter)constructor.Invoke(Array.Empty<object>());
+            var newInstance = (IRedisValueSerializer)constructor.Invoke(Array.Empty<object>());
             return newInstance;
         }
 
@@ -169,8 +241,8 @@ namespace R8.RedisMapper
         /// </summary>
         /// <param name="formatters">The formatters to search in.</param>
         /// <param name="type">A type that representing the type of value.</param>
-        /// <returns>A <see cref="IRedisValueFormatter"/> object.</returns>
-        public static IRedisValueFormatter GetReaderFormatter(this IEnumerable<IRedisValueFormatter> formatters, Type type)
+        /// <returns>A <see cref="IRedisValueSerializer"/> object.</returns>
+        public static IRedisValueSerializer GetReaderFormatter(this IEnumerable<IRedisValueSerializer> formatters, Type type)
         {
             var formatter = formatters.FirstOrDefault(x => x.Type == type);
             if (formatter == null)
@@ -180,7 +252,7 @@ namespace R8.RedisMapper
             if (constructor == null)
                 return null;
 
-            var newInstance = (IRedisValueFormatter)constructor.Invoke(Array.Empty<object>());
+            var newInstance = (IRedisValueSerializer)constructor.Invoke(Array.Empty<object>());
             return newInstance;
         }
     }

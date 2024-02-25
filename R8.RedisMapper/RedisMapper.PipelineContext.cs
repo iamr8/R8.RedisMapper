@@ -28,11 +28,11 @@ namespace R8.RedisMapper
         /// <summary>
         /// Gets or sets the Redis Value Formatters. Default: The formatters set in <see cref="Configuration.ValueFormatters"/>.
         /// </summary>
-        public IList<IRedisValueFormatter> ValueFormatters { get; set; } = new List<IRedisValueFormatter>();
+        public IList<IRedisValueSerializer> ValueFormatters { get; set; } = new List<IRedisValueSerializer>();
     }
 
 
-    public class PipelineContext<T> : PipelineContextBase
+    public sealed class PipelineContext<T> : PipelineContextBase
     {
         /// <summary>
         /// Gets or sets the specific properties of the <see cref="T"/> to be retrieved from the cache.
@@ -52,7 +52,7 @@ namespace R8.RedisMapper
         public bool AllProperties { get; set; } = true;
     }
 
-    public class PipelineContext : PipelineContextBase
+    public sealed class PipelineContext : PipelineContextBase
     {
         /// <summary>
         /// Gets or sets the list of field names.

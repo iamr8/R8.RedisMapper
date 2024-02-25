@@ -10,9 +10,9 @@ namespace R8.RedisMapper
 {
     public static class Commands
     {
-        private static void ExtractConfiguration<T>(Action<PipelineContext<T>> options,
-            out CachedPropertyInfo[] props, out RedisValueReaderContext readerContext, out IList<IRedisValueFormatter> valueFormatters, out RedisFieldFormatter fieldFormatter)
+        private static void ExtractConfiguration<T>(Action<PipelineContext<T>> options, out CachedPropertyInfo[] props, out RedisValueReaderContext readerContext, out IList<IRedisValueSerializer> valueFormatters, out RedisFieldFormatter fieldFormatter)
         {
+            props = Array.Empty<CachedPropertyInfo>();
             if (options != null)
             {
                 var opt = new PipelineContext<T>();
@@ -29,7 +29,7 @@ namespace R8.RedisMapper
 
                 if (opt.AllProperties)
                 {
-                    props = typeof(T).GetProperties(Array.Empty<string>(), Configuration.FieldFormatter).ToArray();
+                    // props = typeof(T).GetProperties(Array.Empty<string>(), Configuration.FieldFormatter).ToArray();
                 }
                 else
                 {
@@ -40,12 +40,12 @@ namespace R8.RedisMapper
                     for (var i = 0; i < opt.Properties.Count; i++)
                         span[i] = opt.Properties[i];
 
-                    props = typeof(T).GetProperties(span.ToArray(), Configuration.FieldFormatter).ToArray();
+                    // props = typeof(T).GetProperties(span.ToArray(), Configuration.FieldFormatter).ToArray();
                 }
             }
             else
             {
-                props = typeof(T).GetProperties(Array.Empty<string>(), Configuration.FieldFormatter).ToArray();
+                // props = typeof(T).GetProperties(Array.Empty<string>(), Configuration.FieldFormatter).ToArray();
                 readerContext = new RedisValueReaderContext(typeof(T))
                 {
                     IgnoreDefaultValue = Configuration.IgnoreDefaultValues,
@@ -56,8 +56,7 @@ namespace R8.RedisMapper
             }
         }
 
-        private static void ExtractConfiguration(Action<PipelineContext> options,
-            out string[] fields, out RedisFieldFormatter fieldFormatter)
+        private static void ExtractConfiguration(Action<PipelineContext> options, out string[] fields, out RedisFieldFormatter fieldFormatter)
         {
             var opt = new PipelineContext();
             options.Invoke(opt);
@@ -73,7 +72,7 @@ namespace R8.RedisMapper
         /// <summary>
         /// Retrieves the values associated with the specified fields in the hash stored at the specified cache key asynchronously.
         /// </summary>
-        /// <typeparam name="T">The type of the value to retrieve.</typeparam>
+        /// <typeparam name="TObject">The type of the value to retrieve.</typeparam>
         /// <param name="database">The asynchronous <see cref="RedisDatabase"/> connection.</param>
         /// <param name="key">The key of the cache hash.</param>
         /// <param name="options">Optional. The action to perform on the <see cref="PipelineContext{T}"/>.</param>
@@ -82,14 +81,14 @@ namespace R8.RedisMapper
         /// A Task representing the asynchronous operation that retrieves the value associated with the specified field
         /// in the hash stored at the specified cache key. The task result represents the retrieved value.
         /// </returns>
-        public static async Task<T> HashGetAsync<T>(this IDatabaseAsync database, RedisKey key, Action<PipelineContext<T>> options = null, CommandFlags flags = CommandFlags.None)
+        public static async Task<TObject> HashGetAsync<TObject>(this IDatabaseAsync database, RedisKey key, Action<PipelineContext<TObject>> options = null, CommandFlags flags = CommandFlags.None) where TObject : class, IRedisCacheObject, new()
         {
             ExtractConfiguration(options, out var props, out var readerContext, out var valueFormatters, out var fieldFormatter);
 
             var fields = props.Select(x => fieldFormatter.GetFormatted(x.Property.Name)).ToArray();
             var redisValues = await database.HashGetAsync(key, fields, flags).ConfigureAwait(false);
-            var redisCache = redisValues.Parse<T>(props, valueFormatters, readerContext);
-            return redisCache;
+            var model = redisValues.Parse<TObject>(valueFormatters, readerContext);
+            return model;
         }
 
         /// <summary>
@@ -114,98 +113,28 @@ namespace R8.RedisMapper
         }
 
 
-        
-        
-        /// <summary>
-        /// Returns the deserialized model value of the specified key asynchronously.
-        /// </summary>
-        /// <typeparam name="T">The type of the model to retrieve.</typeparam>
-        /// <param name="database">The Redis database connection.</param>
-        /// <param name="key">The <see cref="RedisKey"/> of the cache.</param>
-        /// <param name="flags">The flags to use for this operation.</param>
-        /// <returns>The deserialized model value.</returns>
-        public static async Task<T> GetAsync<T>(this IDatabaseAsync database, RedisKey key, CommandFlags flags = CommandFlags.None)
-        {
-            var redisCache = await database.StringGetAsync(key, flags).ConfigureAwait(false);
-            if (redisCache.IsNullOrEmpty)
-                return default;
-
-            var c = (string)redisCache!;
-            var model = JsonSerializer.Deserialize<T>(c, Configuration.SerializerOptions);
-            return model;
-        }
-
-        
-        
-        
-        public static Task<bool> SetAsync<TValue>(this IDatabaseAsync database, RedisKey key, TValue value, TimeSpan? expiry = null, When when = When.Always, CommandFlags flags = CommandFlags.None)
-        {
-            var writerContext = new RedisValueWriterContext
-            {
-                IgnoreDefaultValue = Configuration.IgnoreDefaultValues,
-                SerializerOptions = Configuration.SerializerOptions,
-                DataType = typeof(TValue),
-            };
-            var val = RedisValueExtensions.GetRedisValue(value, Configuration.ValueFormatters, writerContext);
-            if (val.IsNullOrEmpty)
-            {
-                return database.KeyDeleteAsync(key, flags);
-            }
-            else
-            {
-                return database.StringSetAsync(key, val, expiry, when, flags);
-            }
-        }
-
-        
-        
-        
-
         /// <summary>
         /// Sets the values of the specified keys in a hash stored at the specified key asynchronously.
         /// </summary>
         /// <param name="database">The Redis database instance.</param>
         /// <param name="key">The key of the hash.</param>
-        /// <param name="model">The model object to store as hash entries.</param>
+        /// <param name="obj">The model object to store as hash entries.</param>
         /// <param name="flags">The flags to be applied to the command (optional).</param>
-        /// <typeparam name="TModel">The type of the model object.</typeparam>
+        /// <typeparam name="TObject">The type of the model object.</typeparam>
         /// <returns>A task that represents the asynchronous operation.</returns>
         /// <exception cref="ArgumentNullException">Thrown when model is null.</exception>
-        public static Task HashSetAsync<TModel>(this IDatabaseAsync database, RedisKey key, TModel model, CommandFlags flags = CommandFlags.None) where TModel : class
+        public static Task HashSetAsync<TObject>(this IDatabaseAsync database, RedisKey key, TObject obj, CommandFlags flags = CommandFlags.None) where TObject : class, IRedisCacheObject
         {
-            if (model == null)
-                throw new ArgumentNullException(nameof(model));
+            if (obj == null)
+                throw new ArgumentNullException(nameof(obj));
 
             var writerContext = new RedisValueWriterContext
             {
                 IgnoreDefaultValue = Configuration.IgnoreDefaultValues,
                 SerializerOptions = Configuration.SerializerOptions,
             };
-            var hashEntries = model.GetHashEntries(Configuration.FieldFormatter, Configuration.ValueFormatters, writerContext);
-            return database.HashSetAsync(key, hashEntries.ToArray(), flags: flags);
-        }
 
-        /// <summary>
-        /// Asynchronously sets the values of multiple fields in a hash stored at the specified key in Redis.
-        /// </summary>
-        /// <typeparam name="TValue">The type of the values in the hash entries.</typeparam>
-        /// <param name="database">The Redis database.</param>
-        /// <param name="key">The key of the hash.</param>
-        /// <param name="keys">A dictionary containing the fields and their corresponding values to be set in the hash.</param>
-        /// <param name="flags">The command flags (optional).</param>
-        /// <returns>A task representing the asynchronous operation.</returns>
-        /// <exception cref="ArgumentNullException">Thrown when <paramref name="keys"/> is null.</exception>
-        public static Task HashSetAsync<TValue>(this IDatabaseAsync database, RedisKey key, IDictionary<string, TValue> keys, CommandFlags flags = CommandFlags.None)
-        {
-            if (keys == null)
-                throw new ArgumentNullException(nameof(keys));
-
-            var writerContext = new RedisValueWriterContext
-            {
-                IgnoreDefaultValue = Configuration.IgnoreDefaultValues,
-                SerializerOptions = Configuration.SerializerOptions,
-            };
-            var hashEntries = keys.ToHashEntries(Configuration.FieldFormatter, Configuration.ValueFormatters, writerContext);
+            var hashEntries = obj.GetHashEntries(Configuration.FieldFormatter, Configuration.ValueFormatters, writerContext);
             return database.HashSetAsync(key, hashEntries.ToArray(), flags: flags);
         }
     }

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Reflection;
 using StackExchange.Redis;
 
 namespace R8.RedisMapper
@@ -14,24 +16,28 @@ namespace R8.RedisMapper
                 .ToDictionary(x => x.Key, x => x.Value, StringComparer.Ordinal);
             return dict;
         }
+        
+        private static int FromDouble(double other) => (int)other;
 
-        public static T Parse<T>(this IReadOnlyList<RedisValue> redisValues, IReadOnlyList<CachedPropertyInfo> props, IList<IRedisValueFormatter> valueFormatters, RedisValueReaderContext readerContext)
+        private static Func<double, int> di = FromDouble;
+
+
+        public static TObject Parse<TObject>(this RedisValue[] redisValues, IList<IRedisValueSerializer> valueFormatters, RedisValueReaderContext readerContext) where TObject : class, IRedisCacheObject, new()
         {
-            if (redisValues.Count == 0)
+            if (redisValues.Length == 0)
                 return default;
 
             if (redisValues.All(x => x.IsNull))
                 return default;
 
-            var model = Activator.CreateInstance<T>();
+            var model = new TObject();
+            if (!(model is IRedisCacheObjectAdapter<TObject> adapter))
+                throw new InvalidOperationException($"It might the source generator did not generate the reflector for {model.GetType()}.");
+            
             var anyValid = false;
-            for (var i = 0; i < redisValues.Count; i++)
+            for (var i = 0; i < redisValues.Length; i++)
             {
-                var prop = props[i];
-                var redisValue = redisValues[i];
-
-                var rc = new RedisValueReaderContext(readerContext, prop.Property.PropertyType);
-                var cacheValid = prop.SetValue(model, redisValue, valueFormatters, rc);
+                var cacheValid = adapter.SetValue(model, adapter.Properties[i], redisValues[i]);
                 if (cacheValid)
                     anyValid = true;
             }

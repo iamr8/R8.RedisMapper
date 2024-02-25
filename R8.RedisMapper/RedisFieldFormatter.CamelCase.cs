@@ -7,7 +7,7 @@ namespace R8.RedisMapper
     /// <summary>
     /// A formatter that converts the given string to camel case.
     /// </summary>
-    public class RedisFieldCamelCaseFormatter : RedisFieldFormatter
+    public sealed class RedisFieldCamelCaseFormatter : RedisFieldFormatter
     {
         public override RedisValue GetFormatted(string field)
         {

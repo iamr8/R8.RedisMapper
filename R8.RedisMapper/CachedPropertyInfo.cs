@@ -1,11 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using StackExchange.Redis;
 
 namespace R8.RedisMapper
 {
-    internal readonly struct CachedPropertyInfo : IEquatable<CachedPropertyInfo>
+    public class CachedPropertyInfo : IEquatable<CachedPropertyInfo>
     {
+        public CachedPropertyInfo()
+        {
+        }
+
         public CachedPropertyInfo(string formattedName, PropertyInfo property)
         {
             this.FormattedName = formattedName;
@@ -19,6 +24,11 @@ namespace R8.RedisMapper
         public PropertyInfo Property { get; }
         public Type PropertyType { get; }
         public bool IsNullable { get; }
+
+        internal RedisValue GetFormattedName()
+        {
+            return R8.RedisMapper.Configuration.FieldFormatter.GetFormatted(this.FormattedName);
+        }
 
         public bool Equals(CachedPropertyInfo other)
         {

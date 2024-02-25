@@ -1,44 +1,49 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>net6.0;net7.0;net8.0;netstandard2.1</TargetFrameworks>
+        <TargetFramework>netstandard2.1</TargetFramework>
         <DisableImplicitGlobalUsings>true</DisableImplicitGlobalUsings>
-        <ImplicitUsings>disable</ImplicitUsings>
 
         <EnableNETAnalyzers>true</EnableNETAnalyzers>
+        <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+        <IsRoslynComponent>true</IsRoslynComponent>
+<!--        <CompilerGeneratedFilesOutputPath>$(OutputPath)\Generated</CompilerGeneratedFilesOutputPath>-->
+        
+<!--        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>-->
+        
+<!--        <LangVersion>latest</LangVersion>-->
+        
+<!--        <Nullable>enable</Nullable>-->
     </PropertyGroup>
 
-    <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0"/>
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.4"/>
-        <PackageReference Include="System.Text.Json" Version="6.0.9"/>
-    </ItemGroup>
-
-    <ItemGroup Condition="'$(TargetFramework)' == 'net7.0'">
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0"/>
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.1"/>
-        <PackageReference Include="System.Text.Json" Version="7.0.4"/>
-    </ItemGroup>
-
-    <ItemGroup Condition="'$(TargetFramework)' == 'net8.0' or '$(TargetFramework)' == 'netstandard2.1'">
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0"/>
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0"/>
-        <PackageReference Include="System.Text.Json" Version="8.0.0" />
-    </ItemGroup>
-
     <ItemGroup>
-        <PackageReference Include="Meziantou.Analyzer" Version="2.0.127">
+        <PackageReference Include="Meziantou.Analyzer" Version="2.0.144">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
 
-        <PackageReference Include="StackExchange.Redis" Version="2.7.4"/>
+        <PackageReference Include="StackExchange.Redis" Version="2.7.20" />
+
+        <PackageReference Include="System.Collections.Immutable" Version="8.0.0" />
+        <PackageReference Include="System.Text.Json" Version="8.0.2" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
+        <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0" PrivateAssets="all"/>
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.8.0" PrivateAssets="all"/>
     </ItemGroup>
 
     <ItemGroup>
         <InternalsVisibleTo Include="$(AssemblyName).Tests"/>
         <InternalsVisibleTo Include="$(AssemblyName).Benchmark"/>
         <InternalsVisibleTo Include="DynamicProxyGenAssembly2"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="true"/>
     </ItemGroup>
 
 </Project>
