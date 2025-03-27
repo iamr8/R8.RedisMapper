@@ -1,6 +1,8 @@
 # RedisHelper
 An `StackExchange.Redis` assistant class for .NET Core.
 
+(**This library is not updated frequently and it's still under development**)
+
 ### Installation
 #### Step 1
 ```csharp
